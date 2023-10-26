@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  streamlit:
+    image: amazon-bedrock-serverless-prompt-chaining-demo
+    build:
+      dockerfile: ./Dockerfile
+      context: .
+    ports:
+      - "8501:8501"
+    environment:
+      - AWS_REGION=us-west-2
+    volumes:
+      - type: bind
+        source: ~/.aws
+        target: /root/.aws
