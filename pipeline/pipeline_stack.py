@@ -62,6 +62,7 @@ class PipelineStack(Stack):
             action_name="GitHubSource",
             owner="aws-samples",
             repo="amazon-bedrock-serverless-prompt-chaining",
+            branch="main",
             connection_arn=github_connection.attr_connection_arn,
             output=source_output,
         )
