@@ -17,10 +17,6 @@ conditions, and input/output manipulation. Workflows can also chain together ste
 steps that invoke custom code in Lambda functions, and steps that interact with over 220 AWS services.
 Both Bedrock and Step Functions are serverless, so you don't have to manage any infrastructure to deploy and scale up your application.
 
-## Prompt chaining techniques
-
-
-
 ## Prompt chaining examples
 
 This repository contains several working examples of using the prompt chaining techniques described above,
@@ -40,21 +36,31 @@ the next prompt as context for the next step in the chain.
 
 ![](/webapp/pages/workflow_images/blog_post.png)
 
+CDK code: [stacks/blog_post_stack.py](stacks/blog_post_stack.py)
+
 ### Plan a trip
 
 ![](/webapp/pages/workflow_images/trip_planner.png)
+
+CDK code: [stacks/trip_planner_stack.py](stacks/trip_planner_stack.py)
 
 ### Write a story
 
 ![](/webapp/pages/workflow_images/story_writer.png)
 
+CDK code: [stacks/story_writer_stack.py](stacks/story_writer_stack.py)
+
 ### Pitch a movie idea
 
 ![](/webapp/pages/workflow_images/movie_pitch.png)
 
+CDK code: [stacks/movie_pitch_stack.py](stacks/movie_pitch_stack.py)
+
 ### Plan a meal
 
 ![](/webapp/pages/workflow_images/meal_planner.png)
+
+CDK code: [stacks/meal_planner_stack.py](stacks/meal_planner_stack.py)
 
 ## Deploy
 
