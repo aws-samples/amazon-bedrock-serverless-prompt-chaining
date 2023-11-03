@@ -54,6 +54,12 @@ class AlarmsStack(Stack):
                 principals=[
                     iam.ServicePrincipal("codestar-notifications.amazonaws.com")
                 ],
+                resources=[
+                    Stack.of(self).format_arn(
+                        service="sns",
+                        resource="bedrock-serverless-prompt-chaining-notifications",
+                    )
+                ],
             )
         )
         composite_alarm.add_alarm_action(cw_actions.SnsAction(topic))
