@@ -2,6 +2,7 @@ from aws_cdk import (
     Stack,
     aws_cloudwatch as cloudwatch,
     aws_cloudwatch_actions as cw_actions,
+    aws_iam as iam,
     aws_stepfunctions as sfn,
     aws_sns as sns,
 )
@@ -46,5 +47,13 @@ class AlarmsStack(Stack):
             self,
             "PromptChainDemo-Notifications",
             topic_name="bedrock-serverless-prompt-chaining-notifications",
+        )
+        topic.add_to_resource_policy(
+            iam.PolicyStatement(
+                actions=["SNS:Publish"],
+                principals=[
+                    iam.ServicePrincipal("codestar-notifications.amazonaws.com")
+                ],
+            )
         )
         composite_alarm.add_alarm_action(cw_actions.SnsAction(topic))

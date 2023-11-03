@@ -1,4 +1,4 @@
-# Development guide
+## Development guide
 
 ### Setup
 
@@ -28,13 +28,6 @@ Edit the file `cdk_stacks.py`. Search for `parent_domain` and fill in your own D
 The demo will be hosted at `bedrock-serverless-prompt-chaining.my-domain.com`.
 Push this change to your fork repository.
 
-Create an SNS topic for notifications about demo failures.
-An email address or a [chat bot](https://docs.aws.amazon.com/chatbot/latest/adminguide/setting-up.html)
-can be subscribed to the topic to receive notifications when the demo's alarms fire.
-```
-aws sns create-topic --name bedrock-serverless-prompt-chaining-notifications --region us-west-2
-```
-
 Set up a Weasyprint Lambda layer in your account:
 ```
 git clone https://github.com/kotify/cloud-print-utils.git
@@ -62,6 +55,11 @@ Deploy all the demo stacks:
 cdk deploy --app 'python3 cdk_stacks.py' --all
 ```
 
+As part of deploying the demo application, an SNS topic `bedrock-serverless-prompt-chaining-notifications`
+will be created and will receive notifications about demo failures.
+An email address or a [chat bot](https://docs.aws.amazon.com/chatbot/latest/adminguide/setting-up.html)
+can be subscribed to the topic to receive notifications when the demo's alarms fire.
+
 ### Deploy the demo pipeline
 
 The demo pipeline will automatically keep your deployed demo in sync with the latest changes
@@ -82,8 +80,11 @@ select the `bedrock-prompt-chain-repo` connection, and click "Update pending con
 Then follow the prompts to connect your GitHub account and repos to AWS.
 When finished, the `bedrock-prompt-chain-repo` connection should have the "Available" status.
 
-Follow the [CodeStar Notifications user guide](https://docs.aws.amazon.com/codestar-notifications/latest/userguide/set-up-sns.html)
-to configure the SNS topic created in the previous section to be able to receive notifications about pipeline failures.
+Go to the [pipeline's page in the CodePipeline console](https://us-west-2.console.aws.amazon.com/codesuite/codepipeline/pipelines/bedrock-serverless-prompt-chaining-demo/view?region=us-west-2),
+and click "Release change" to restart the pipeline.
+
+As part of deploying the demo application, an SNS topic `bedrock-serverless-prompt-chaining-notifications`
+will be created and will receive notifications about pipeline failures.
 An email address or a [chat bot](https://docs.aws.amazon.com/chatbot/latest/adminguide/setting-up.html)
 can be subscribed to the topic to receive notifications when pipeline executions fail.
 
