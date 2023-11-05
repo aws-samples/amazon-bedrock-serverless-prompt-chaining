@@ -25,7 +25,7 @@ After this initial setup, you only need to run `source .venv/bin/activate` to us
 
 Fork this repo to your own GitHub account.
 Edit the file `cdk_stacks.py`. Search for `parent_domain` and fill in your own DNS domain, such as `my-domain.com`.
-The demo will be hosted at `bedrock-serverless-prompt-chaining.my-domain.com`.
+The demo will be hosted at `https://bedrock-serverless-prompt-chaining.my-domain.com`.
 Push this change to your fork repository.
 
 Set up a Weasyprint Lambda layer in your account:
