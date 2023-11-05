@@ -94,6 +94,7 @@ class WebappStack(Stack):
         user_pool = cognito.UserPool(
             self,
             "StreamlitUserPool",
+            user_pool_name=cognito_domain_prefix,
             removal_policy=RemovalPolicy.DESTROY,
             account_recovery=cognito.AccountRecovery.NONE,
             auto_verify=cognito.AutoVerifiedAttrs(email=True),

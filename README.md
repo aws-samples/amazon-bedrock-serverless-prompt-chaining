@@ -14,7 +14,7 @@ according to a set of defined rules.
 For applications using prompt chaining, Step Functions can orchestrate complex chains of prompts and invoke foundation models in Bedrock.
 Beyond simple ordered chains of prompts, Step Functions workflows can contain loops, map jobs, parallel jobs,
 conditions, and input/output manipulation. Workflows can also chain together steps that invoke a foundation model in Bedrock,
-steps that invoke custom code in Lambda functions, and steps that interact with over 220 AWS services.
+steps that invoke custom code in AWS Lambda functions, and steps that interact with over 220 AWS services.
 Both Bedrock and Step Functions are serverless, so you don't have to manage any infrastructure to deploy and scale up your application.
 
 ## Prompt chaining techniques

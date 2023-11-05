@@ -55,6 +55,12 @@ Deploy all the demo stacks:
 cdk deploy --app 'python3 cdk_stacks.py' --all
 ```
 
+The demo will be hosted at `https://bedrock-serverless-prompt-chaining.my-domain.com`,
+behind Cognito-based user authentication.
+To add users that can log into the demo application, select the `bedrock-serverless-prompt-chaining-demo` user pool on the
+[Cognito console](https://us-west-2.console.aws.amazon.com/cognito/v2/idp/user-pools?region=us-west-2)
+and click "Create user".
+
 As part of deploying the demo application, an SNS topic `bedrock-serverless-prompt-chaining-notifications`
 will be created and will receive notifications about demo failures.
 An email address or a [chat bot](https://docs.aws.amazon.com/chatbot/latest/adminguide/setting-up.html)
