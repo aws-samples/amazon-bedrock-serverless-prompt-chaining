@@ -58,14 +58,7 @@ with behind_the_scenes_col:
     else:
         display_no_state_machine_status()
 
-    st.subheader("🔍 Behind the scenes")
-    st.write(
-        "This demo illustrates parallelizing multiple distinct prompts and merging those prompt's responses into a final prompt that generates a final answer. \
-        When the user provides a location they want to visit, three different agents run in parallel to suggest places to stay, places to eat, and activities. \
-        A fourth agent then merges those suggestions to create a single itinerary. \
-        This demo also illustrates chaining together both agents and regular code functionality. \
-        The final step in the workflow is a Lambda function that creates a PDF of the itinerary and uploads it to S3, with no LLM interactions."
-    )
+    st.subheader("🔍 Step Functions state machine")
     st.image(image="/app/pages/workflow_images/trip_planner.png")
 
 with demo_col:

@@ -57,16 +57,7 @@ with behind_the_scenes_col:
     else:
         display_no_state_machine_status()
 
-    st.subheader("🔍 Behind the scenes")
-    st.write(
-        "This demo illustrates using debate between two agents to improve the final answer. \
-        When the user provides some ingredients they have on hand, multiple agents run in parallel to suggest the 'tastiest' meal the user can make. \
-        Another agent scores the meal suggestions on a scale of 0 to 100 for 'tastiness'. \
-        The agents then debate additional meal suggestions to attempt to improve their own score in comparison to the other agents. \
-        A separate 'referee' agent determines if there is consensus among the agents about the tastiest meal, \
-        and if not, the workflow loops back to the agents for another debate round. \
-        A small code-only function chooses the highest-scoring meal (no LLM interaction), and a final agent generates a recipe for that meal."
-    )
+    st.subheader("🔍 Step Functions state machine")
     st.image(image="/app/pages/workflow_images/meal_planner.png")
 
 with demo_col:

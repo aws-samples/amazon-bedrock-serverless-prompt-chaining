@@ -82,22 +82,7 @@ with behind_the_scenes_col:
     else:
         display_no_state_machine_status()
 
-    st.subheader("🔍 Behind the scenes")
-    st.write(
-        "This demo illustrates using varying temperature settings to generate multiple possible answers and choosing one. \
-        The user acts as a 'movie producer' seeking movie pitches from screenwriters and gives some input on what the movie should be about. \
-        A movie pitch generator agent runs three times in parallel using three different temperature settings to generate three movie pitches. \
-        The next agent chooses which movie pitch among the three generated options should be presented to the 'movie producer' user."
-    )
-    st.write(
-        "This demo also illustrates adding human user input into a workflow. \
-        The workflow has a defined state at which a user decision is needed: \
-        the 'movie producer' user needs to decide whether to 'greenlight' the presented movie pitch or reject it. \
-        The workflow pauses while the demo UI asks the user for their decision. \
-        When the UI provides the user's decision to the workflow, the workflow continues. \
-        Depending on the user's decision, the workflow either moves forward to generate a longer movie pitch for the greenlit idea, \
-        or loops back around to the beginning of the workflow to generate three new movie pitches."
-    )
+    st.subheader("🔍 Step Functions state machine")
     st.image(image="/app/pages/workflow_images/movie_pitch.png")
 
 with demo_col:

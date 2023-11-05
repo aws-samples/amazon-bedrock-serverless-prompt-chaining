@@ -57,12 +57,7 @@ with behind_the_scenes_col:
     else:
         display_no_state_machine_status()
 
-    st.subheader("🔍 Behind the scenes")
-    st.write(
-        "This demo illustrates chaining multiple prompts together in a simple, sequential pipeline \
-        to generate a blog post for a literature blog. \
-        The previous prompts and LLM responses are carried forward and included in the next prompt."
-    )
+    st.subheader("🔍 Step Functions state machine")
     st.image(image="/app/pages/workflow_images/blog_post.png")
 
 
