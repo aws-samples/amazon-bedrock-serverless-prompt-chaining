@@ -21,14 +21,14 @@ pip install boto3
 ```
 After this initial setup, you only need to run `source .venv/bin/activate` to use the virtual env for further development.
 
-### Deploy the demo
+### Deploy the demo application
 
 Fork this repo to your own GitHub account.
 Edit the file `cdk_stacks.py`. Search for `parent_domain` and fill in your own DNS domain, such as `my-domain.com`.
-The demo will be hosted at `https://bedrock-serverless-prompt-chaining.my-domain.com`.
+The demo application will be hosted at `https://bedrock-serverless-prompt-chaining.my-domain.com`.
 Push this change to your fork repository.
 
-Set up a Weasyprint Lambda layer in your account:
+Set up a Weasyprint Lambda layer in your account. One of the examples in the demo application uses this library to generate PDF files.
 ```
 git clone https://github.com/kotify/cloud-print-utils.git
 
@@ -55,7 +55,7 @@ Deploy all the demo stacks:
 cdk deploy --app 'python3 cdk_stacks.py' --all
 ```
 
-The demo will be hosted at `https://bedrock-serverless-prompt-chaining.my-domain.com`,
+The demo application will be hosted at `https://bedrock-serverless-prompt-chaining.my-domain.com`,
 behind Cognito-based user authentication.
 To add users that can log into the demo application, select the `bedrock-serverless-prompt-chaining-demo` user pool on the
 [Cognito console](https://us-west-2.console.aws.amazon.com/cognito/v2/idp/user-pools?region=us-west-2)
@@ -68,8 +68,7 @@ can be subscribed to the topic to receive notifications when the demo's alarms f
 
 ### Deploy the demo pipeline
 
-The demo pipeline will automatically keep your deployed demo in sync with the latest changes
-in your fork repository.
+The demo pipeline will automatically keep your deployed demo application in sync with the latest changes in your fork repository.
 
 Edit the file `pipeline/pipeline_stack.py`.
 Search for `owner` and fill in the GitHub account that owns your fork repository.

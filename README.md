@@ -1,4 +1,4 @@
-## Amazon Bedrock Serverless Prompt Chaining Examples
+## Amazon Bedrock Serverless Prompt Chaining
 
 This repository provides examples of using [AWS Step Functions](https://aws.amazon.com/step-functions/)
 and [Amazon Bedrock](https://aws.amazon.com/bedrock/) to build complex, serverless, and highly scalable
@@ -19,21 +19,16 @@ Both Bedrock and Step Functions are serverless, so you don't have to manage any 
 
 <!-- toc -->
 
-1. [Prompt chaining techniques](#prompt-chaining-techniques)
 1. [Prompt chaining examples](#prompt-chaining-examples)
     1. [Write a blog post](#write-a-blog-post)
     1. [Write a story](#write-a-story)
     1. [Plan a trip](#plan-a-trip)
     1. [Pitch a movie idea](#pitch-a-movie-idea)
     1. [Plan a meal](#plan-a-meal)
-1. [Deploy](#deploy)
+1. [Deploy the examples](#deploy-the-examples)
 1. [Security](#security)
 1. [License](#license)
 <!-- tocstop -->
-
-## Prompt chaining techniques
-
-TODO
 
 ## Prompt chaining examples
 
@@ -149,7 +144,7 @@ choosing the highest meal score.
 
 CDK code: [stacks/meal_planner_stack.py](stacks/meal_planner_stack.py)
 
-## Deploy
+## Deploy the examples
 
 See the [development guide](DEVELOP.md) for instructions on how to deploy the demo application.
 
