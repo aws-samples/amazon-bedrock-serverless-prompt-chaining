@@ -17,6 +17,20 @@ conditions, and input/output manipulation. Workflows can also chain together ste
 steps that invoke custom code in AWS Lambda functions, and steps that interact with over 220 AWS services.
 Both Bedrock and Step Functions are serverless, so you don't have to manage any infrastructure to deploy and scale up your application.
 
+<!-- toc -->
+
+1. [Prompt chaining techniques](#prompt-chaining-techniques)
+1. [Prompt chaining examples](#prompt-chaining-examples)
+    1. [Write a blog post](#write-a-blog-post)
+    1. [Write a story](#write-a-story)
+    1. [Plan a trip](#plan-a-trip)
+    1. [Pitch a movie idea](#pitch-a-movie-idea)
+    1. [Plan a meal](#plan-a-meal)
+1. [Deploy](#deploy)
+1. [Security](#security)
+1. [License](#license)
+<!-- tocstop -->
+
 ## Prompt chaining techniques
 
 TODO
@@ -33,7 +47,7 @@ The Step Functions state machines are defined using [AWS CDK](https://aws.amazon
 
 This example generates an analysis of a given novel for a literature blog.
 
-TODO screenshot
+![Screenshot](/docs/screenshots/blog_post.png)
 
 This task is broken down into multiple subtasks to first generate individual paragraphs
 focused on specific areas of analysis, then a final subtask to pull together the generated
@@ -49,7 +63,7 @@ CDK code: [stacks/blog_post_stack.py](stacks/blog_post_stack.py)
 
 This example generates a short story about a given topic.
 
-TODO screenshot
+![Screenshot](/docs/screenshots/story_writer.png)
 
 This task is broken down into multiple subtasks to first generate a list of characters for the story,
 generate each character's arc for the story, and then finally generate the short story using
@@ -65,7 +79,9 @@ CDK code: [stacks/story_writer_stack.py](stacks/story_writer_stack.py)
 
 This example generates an itinerary for a weekend vacation to a given destination.
 
-TODO screenshots
+![Screenshot](/docs/screenshots/trip_planner.png)
+
+![Screenshot](/docs/screenshots/trip_planner_itinerary.png)
 
 This task is broken down into multiple subtasks, which first generate suggestions for hotels,
 activities, and restaurants and then combines that content into a single daily itinerary.
@@ -86,7 +102,9 @@ This example acts as an AI screenwriter pitching movie ideas to the human user a
 The movie producer can greenlight the AI's movie idea to get a longer one-page pitch for the idea,
 or they can reject the movie idea and the AI will generate a new idea to pitch.
 
-TODO screenshots
+![Screenshot](/docs/screenshots/movie_pitch.png)
+
+![Screenshot](/docs/screenshots/movie_pitch_one_pager.png)
 
 This task is broken down into multiple subtasks: first, the prompt for generating a movie idea is invoked
 multiple times in parallel with three different
@@ -110,7 +128,7 @@ CDK code: [stacks/movie_pitch_stack.py](stacks/movie_pitch_stack.py)
 
 This example generates a recipe for the user, based on a few given ingredients they have on hand.
 
-TODO screenshot
+![Screenshot](/docs/screenshots/meal_planner.png)
 
 This task is broken down into multiple subtasks: first, two possible meal ideas are generated in parallel, with
 the two prompts acting as two different "AI chefs". The next prompt in the chain scores the two meal suggestions
