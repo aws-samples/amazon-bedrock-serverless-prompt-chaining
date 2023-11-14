@@ -83,12 +83,6 @@ class WebappStack(Stack):
             workflow.grant_start_execution(fargate_service.task_definition.task_role)
             workflow.grant_task_response(fargate_service.task_definition.task_role)
 
-        # Grant access to credentials required for Bedrock Agents Gamma access
-        iam_user_secret = secretsmanager.Secret.from_secret_name_v2(
-            self, "IamUserSecret", "pabhila-acct-iam-user-creds"
-        )
-        iam_user_secret.grant_read(fargate_service.task_definition.task_role)
-
         # Add Cognito for authentication
         cognito_domain_prefix = "bedrock-serverless-prompt-chaining-demo"
         user_pool = cognito.UserPool(
