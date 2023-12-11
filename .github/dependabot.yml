@@ -1,0 +1,134 @@
+version: 2
+updates:
+- package-ecosystem: pip
+  directory: "/"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/pipeline"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/webapp"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/agents/story_writer/story_agent"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/agents/story_writer/character_story_agent"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/agents/story_writer/characters_agent"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/agents/meal_planner/meal_generator_agent"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/agents/meal_planner/meal_choose_winner_agent"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/agents/meal_planner/meal_debater_agent"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/agents/meal_planner/meal_debate_referee_agent"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/agents/meal_planner/recipe_generator"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/agents/meal_planner/meal_scoring_agent"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/agents/blog_post/simple_bedrock_proxy"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/agents/movie_pitch/pitch_generator_agent"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/agents/movie_pitch/seek_user_input"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/agents/movie_pitch/pitch_chooser_agent"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/agents/movie_pitch/pitch_one_pager_generator"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/agents/trip_planner/hotels_agent"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/agents/trip_planner/itinerary_agent"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/agents/trip_planner/restaurants_agent"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/agents/trip_planner/activities_agent"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
+  directory: "/agents/trip_planner/pdf_creator"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
