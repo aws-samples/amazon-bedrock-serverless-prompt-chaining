@@ -1,4 +1,4 @@
 asyncio
 botocore==1.31.57
-boto3==1.28.57
+boto3==1.33.12
 streamlit>=1.25.0
