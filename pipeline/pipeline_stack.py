@@ -1,7 +1,5 @@
 from aws_cdk import (
-    App,
     CfnOutput,
-    Environment,
     Stack,
     aws_codestarconnections as connections,
     aws_codebuild as codebuild,
@@ -93,7 +91,7 @@ class PipelineStack(Stack):
                         },
                         "build": {
                             "commands": [
-                                "cdk deploy --app 'python3 pipeline_stack.py' --require-approval=never",
+                                "cdk deploy --app 'python3 pipeline_app.py' --require-approval=never",
                             ]
                         },
                     },
@@ -168,9 +166,3 @@ class PipelineStack(Stack):
             action_name="Deploy", project=deploy_project, input=source_output
         )
         pipeline.add_stage(stage_name="Deploy", actions=[deploy_action])
-
-
-app = App()
-env = Environment(account=os.environ["CDK_DEFAULT_ACCOUNT"], region="us-west-2")
-PipelineStack(app, "PromptChainingPipeline", env=env)
-app.synth()

@@ -23,8 +23,9 @@ jobs:
           python3 -m venv .venv
           source .venv/bin/activate
           pip install -r requirements.txt
+          pip install -r requirements-dev.txt
 
-          cdk synth -o build --app 'python3 pipeline_stack.py'
+          pytest
 
   stacks:
     name: Application Stacks

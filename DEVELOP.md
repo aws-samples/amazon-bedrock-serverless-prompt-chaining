@@ -76,7 +76,7 @@ Push this change to your fork.
 
 Deploy the pipeline:
 ```
-cdk deploy --app 'python3 pipeline_stack.py'
+cdk deploy --app 'python3 pipeline_app.py'
 ```
 
 Activate the CodeStar Connections connection created by the pipeline stack.
