@@ -1,3 +1,3 @@
 asyncio
-boto3==1.34.11
+boto3==1.34.15
 streamlit>=1.25.0
