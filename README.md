@@ -25,6 +25,7 @@ Both Bedrock and Step Functions are serverless, so you don't have to manage any 
     1. [Plan a trip](#plan-a-trip)
     1. [Pitch a movie idea](#pitch-a-movie-idea)
     1. [Plan a meal](#plan-a-meal)
+    1. [Describe the most popular open source repo today](#describe-the-most-popular-open-source-repo-today)
 1. [Deploy the examples](#deploy-the-examples)
 1. [Security](#security)
 1. [License](#license)
@@ -145,6 +146,35 @@ choosing the highest meal score.
 ![Visualization of the blog post workflow](/webapp/pages/workflow_images/meal_planner.png)
 
 CDK code: [stacks/meal_planner_stack.py](stacks/meal_planner_stack.py)
+
+### Describe the most popular open source repo today
+
+This example summarizes the open source repository that is the highest trending repository on GitHub today.
+
+![Screenshot](/docs/screenshots/most_popular_repo.png)
+
+This task is broken down into multiple subtasks to first determine which open source repository
+is the highest trending on GitHub today (based on the [GitHub Trending](https://github.com/trending) page),
+and then generate a summary of the repository based on its README file.
+This example illustrates chaining two [ReAct prompts](https://www.promptingguide.ai/techniques/react) (also known as ReAct agents)
+together in a two-step sequential pipeline to answer the question 'What is the top trending repository on GitHub today?'.
+The two ReAct agents each interact with GitHub APIs to get current information; otherwise, they would not
+be able to identify the current trending repository or its current purpose.
+The first agent scrapes the [GitHub Trending](https://github.com/trending) page, and the second agent calls the GitHub API
+for [retrieving a repository README](https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#get-a-repository-readme).
+Note that LLMs are generally capable of reasoning about and answering this specific question in a single ReAct agent, by calling
+multiple GitHub APIs within the same agent. The example is simply meant to illustrate how a complex task
+requiring ReAct prompting can be broken down into multiple chained subtasks.
+
+![Visualization of the most popular repo workflow](/webapp/pages/workflow_images/most_popular_repo.png)
+
+This example is implemented in two different versions,
+one uses [Bedrock Agents](https://aws.amazon.com/bedrock/agents/)
+and the other uses [Langchain agents](https://python.langchain.com/docs/modules/agents/agent_types/react).
+
+CDK code for Bedrock Agents version: [stacks/most_popular_repo_bedrock_agent_stack.py](stacks/most_popular_repo_bedrock_agent_stack.py)
+
+CDK code for Langchain version: [stacks/most_popular_repo_langchain_stack.py](stacks/most_popular_repo_langchain_stack.py)
 
 ## Deploy the examples
 
