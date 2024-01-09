@@ -12,9 +12,8 @@ from aws_cdk import (
 from constructs import Construct
 
 from .util import (
-    add_bedrock_retries,
-    get_bedrock_iam_policy_statement,
     get_lambda_bundling_options,
+    get_claude_instant_invoke_chain,
 )
 
 
@@ -23,84 +22,87 @@ class TripPlannerStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         # Agent #1: suggest places to stay
-        hotels_lambda = lambda_python.PythonFunction(
-            self,
-            "HotelsAgent",
-            entry="agents/trip_planner/hotels_agent",
-            bundling=get_lambda_bundling_options(),
-            runtime=lambda_.Runtime.PYTHON_3_9,
-            timeout=Duration.seconds(60),
-            memory_size=256,
-        )
-        hotels_lambda.add_to_role_policy(get_bedrock_iam_policy_statement())
-
-        hotels_job = tasks.LambdaInvoke(
+        hotels_job = get_claude_instant_invoke_chain(
             self,
             "Suggest Hotels",
-            lambda_function=hotels_lambda,
-            output_path="$.Payload",
+            prompt=sfn.JsonPath.format(
+                """You are a world-class travel agent and an expert on travel to {}.
+I am going on a weekend vacation to {}.
+Please give me up to 5 suggestions for hotels for my vacation.""",
+                sfn.JsonPath.string_at("$$.Execution.Input.location"),
+                sfn.JsonPath.string_at("$$.Execution.Input.location"),
+            ),
+            max_tokens_to_sample=512,
+            include_previous_conversation_in_prompt=False,
         )
-        add_bedrock_retries(hotels_job)
 
         # Agent #2: suggest places to eat
-        restaurants_lambda = lambda_python.PythonFunction(
-            self,
-            "RestaurantsAgent",
-            runtime=lambda_.Runtime.PYTHON_3_9,
-            entry="agents/trip_planner/restaurants_agent",
-            bundling=get_lambda_bundling_options(),
-            timeout=Duration.seconds(60),
-            memory_size=256,
-        )
-        restaurants_lambda.add_to_role_policy(get_bedrock_iam_policy_statement())
-
-        restaurants_job = tasks.LambdaInvoke(
+        restaurants_job = get_claude_instant_invoke_chain(
             self,
             "Suggest Restaurants",
-            lambda_function=restaurants_lambda,
-            output_path="$.Payload",
+            prompt=sfn.JsonPath.format(
+                """You are a world-class travel agent and an expert on travel to {}.
+I am going on a weekend vacation to {}.
+Please give me suggestions for restaurants for my vacation, including up to 5 suggestions for breakfast, lunch, and dinner.""",
+                sfn.JsonPath.string_at("$$.Execution.Input.location"),
+                sfn.JsonPath.string_at("$$.Execution.Input.location"),
+            ),
+            max_tokens_to_sample=512,
+            include_previous_conversation_in_prompt=False,
         )
-        add_bedrock_retries(restaurants_job)
 
         # Agent #3: suggest places to visit
-        activities_lambda = lambda_python.PythonFunction(
-            self,
-            "ActivitiesAgent",
-            runtime=lambda_.Runtime.PYTHON_3_9,
-            entry="agents/trip_planner/activities_agent",
-            bundling=get_lambda_bundling_options(),
-            timeout=Duration.seconds(60),
-            memory_size=256,
-        )
-        activities_lambda.add_to_role_policy(get_bedrock_iam_policy_statement())
-
-        activities_job = tasks.LambdaInvoke(
+        activities_job = get_claude_instant_invoke_chain(
             self,
             "Suggest Activities",
-            lambda_function=activities_lambda,
-            output_path="$.Payload",
+            prompt=sfn.JsonPath.format(
+                """You are a world-class travel agent and an expert on travel to {}.
+I am going on a weekend vacation to {}.
+Please give me up to 5 suggestions for activities to do or places to visit during my vacation.""",
+                sfn.JsonPath.string_at("$$.Execution.Input.location"),
+                sfn.JsonPath.string_at("$$.Execution.Input.location"),
+            ),
+            max_tokens_to_sample=512,
+            include_previous_conversation_in_prompt=False,
         )
-        add_bedrock_retries(activities_job)
 
         # Agent #4: form an itinerary
-        itinerary_lambda = lambda_python.PythonFunction(
-            self,
-            "ItineraryAgent",
-            runtime=lambda_.Runtime.PYTHON_3_9,
-            entry="agents/trip_planner/itinerary_agent",
-            bundling=get_lambda_bundling_options(),
-            timeout=Duration.seconds(60),
-            memory_size=256,
-        )
-        itinerary_lambda.add_to_role_policy(get_bedrock_iam_policy_statement())
-
-        itinerary_job = tasks.LambdaInvoke(
+        itinerary_job = get_claude_instant_invoke_chain(
             self,
             "Create an Itinerary",
-            lambda_function=itinerary_lambda,
-            output_path="$.Payload",
+            prompt=sfn.JsonPath.format(
+                """You are a world-class travel agent and an expert on travel to {}.
+I am going on a weekend vacation to {} (arriving Friday, leaving Sunday).
+
+You previously recommended these hotels, inside <hotels></hotels> XML tags.
+<hotels>
+{}
+</hotels>
+
+You previously recommended these restaurants, inside <restaurants></restaurants> XML tags.
+<restaurants>
+{}
+</restaurants>
+
+You previously recommended these activities, inside <activities></activities> XML tags.
+<activities>
+{}
+</activities>
+
+Please give me a daily itinerary for my three-day vacation, based on your previous recommendations.
+The itinerary should include one hotel where I will stay for the duration of the vacation.
+Each of the three days in the itinerary should have one activity, one restaurant for breakfast, one restaurant for lunch, and one restaurant for dinner.
+Each entry in the itinerary should include a short description of your recommended hotel, activity, or restaurant.
+The itinerary should be formatted in Markdown format.""",
+                sfn.JsonPath.string_at("$$.Execution.Input.location"),
+                sfn.JsonPath.string_at("$$.Execution.Input.location"),
+                sfn.JsonPath.string_at("$.hotels"),
+                sfn.JsonPath.string_at("$.restaurants"),
+                sfn.JsonPath.string_at("$.activities"),
+            ),
+            max_tokens_to_sample=512,
+            include_previous_conversation_in_prompt=False,
         )
-        add_bedrock_retries(itinerary_job)
 
         # Final step: Create the itinerary PDF
         pdf_bucket = s3.Bucket(
@@ -152,6 +154,12 @@ class TripPlannerStack(Stack):
             "Upload the Itinerary",
             lambda_function=pdf_lambda,
             output_path="$.Payload",
+            payload=sfn.TaskInput.from_object(
+                {
+                    "location": sfn.JsonPath.string_at("$$.Execution.Input.location"),
+                    "itinerary": sfn.JsonPath.string_at("$.output.response"),
+                }
+            ),
         )
 
         # Hook the agents together into a workflow that contains some parallel steps
@@ -161,10 +169,9 @@ class TripPlannerStack(Stack):
                     self,
                     "Suggestions",
                     result_selector={
-                        "location.$": "$[0].location",
-                        "hotels.$": "$[0].hotels",
-                        "restaurants.$": "$[1].restaurants",
-                        "activities.$": "$[2].activities",
+                        "hotels.$": "$[0].output.response",
+                        "restaurants.$": "$[1].output.response",
+                        "activities.$": "$[2].output.response",
                     },
                 )
                 .branch(hotels_job)

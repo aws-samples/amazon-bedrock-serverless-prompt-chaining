@@ -97,30 +97,6 @@ updates:
   open-pull-requests-limit: 10
   versioning-strategy: increase
 - package-ecosystem: pip
-  directory: "/agents/trip_planner/hotels_agent"
-  schedule:
-    interval: monthly
-  open-pull-requests-limit: 10
-  versioning-strategy: increase
-- package-ecosystem: pip
-  directory: "/agents/trip_planner/itinerary_agent"
-  schedule:
-    interval: monthly
-  open-pull-requests-limit: 10
-  versioning-strategy: increase
-- package-ecosystem: pip
-  directory: "/agents/trip_planner/restaurants_agent"
-  schedule:
-    interval: monthly
-  open-pull-requests-limit: 10
-  versioning-strategy: increase
-- package-ecosystem: pip
-  directory: "/agents/trip_planner/activities_agent"
-  schedule:
-    interval: monthly
-  open-pull-requests-limit: 10
-  versioning-strategy: increase
-- package-ecosystem: pip
   directory: "/agents/trip_planner/pdf_creator"
   schedule:
     interval: monthly

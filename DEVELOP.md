@@ -148,13 +148,6 @@ docker compose up --build
 
 Run the Lambda functions locally:
 ```
-# Trip planner
-python -c 'from agents.trip_planner.hotels_agent import index; print(index.handler({"location": "Paris, France"}, ""))'
-
-python -c 'from agents.trip_planner.restaurants_agent import index; print(index.handler({"location": "Paris, France"}, ""))'
-
-python -c 'from agents.trip_planner.activities_agent import index; print(index.handler({"location": "Paris, France"}, ""))'
-
 # Story writer
 python -c 'from agents.story_writer.characters_agent import index; print(index.handler({"story_description": "cowboys in space"}, ""))'
 
