@@ -1,5 +1,5 @@
-langchain==0.0.304
+langchain==0.0.329
 requests==2.31.0
-PyGithub==1.59
+PyGithub==2.1.1
 boto3==1.34.11
 beautifulsoup4
