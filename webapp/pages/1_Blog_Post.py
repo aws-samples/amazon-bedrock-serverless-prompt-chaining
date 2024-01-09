@@ -6,7 +6,7 @@ import stepfn
 
 st.set_page_config(layout="wide")
 
-st.title("Blog post")
+st.title("Blog post generator demo")
 
 execution_status_container = None
 

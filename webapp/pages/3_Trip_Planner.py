@@ -7,7 +7,7 @@ import stepfn
 
 st.set_page_config(layout="wide")
 
-st.title("Trip planner")
+st.title("Trip planner demo")
 
 execution_status_container = None
 

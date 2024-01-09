@@ -21,6 +21,7 @@ class AlarmsStack(Stack):
             "StoryWriter",
             "MoviePitch",
             "MealPlanner",
+            "MostPopularRepoBedrockAgents",
         ]:
             workflow = sfn.StateMachine.from_state_machine_name(
                 self, f"{name_suffix}Workflow", f"PromptChainDemo-{name_suffix}"

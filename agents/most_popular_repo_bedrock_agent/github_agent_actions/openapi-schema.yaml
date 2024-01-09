@@ -1,0 +1,73 @@
+openapi: "3.0.0"
+info:
+  title: GitHub APIs
+  description: APIs for accessing information about GitHub repositories.
+  version: 1.0.0
+
+paths:
+  /get_trending_github_repositories:
+    get:
+      operationId: GetTrendingGitHubRepositories
+      summary: Retrieves the GitHub Trending Repositories webpage.
+      description: This API gives you information about which repositories are currently trending on GitHub.
+      responses:
+        '200':
+          description: A successful response will contain the text response of a GET request to the Trending Repositories page.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contents:
+                    type: string
+                    description: The contents of the GitHub Trending Repositories page.
+                required:
+                  - contents
+        '500':
+          description: Failed request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error
+
+  /get_github_repository_readme:
+    get:
+      operationId: GetGitHubRepositoryReadme
+      summary: Retrieves the content of a GitHub repository's README file.
+      description: This API gives you information about a specific GitHub repository.
+      parameters:
+        - in: query
+          name: repo
+          schema:
+            type: string
+          description: The URL of the GitHub repository.
+          required: true
+      responses:
+        '200':
+          description: A successful response will contain the contents of the readme.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contents:
+                    type: string
+                    description: The contents of the repository readme.
+                required:
+                  - contents
+        '500':
+          description: Failed request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                required:
+                  - error

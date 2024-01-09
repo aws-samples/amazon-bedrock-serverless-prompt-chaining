@@ -7,6 +7,9 @@ from stacks.trip_planner_stack import TripPlannerStack
 from stacks.story_writer_stack import StoryWriterStack
 from stacks.movie_pitch_stack import MoviePitchStack
 from stacks.meal_planner_stack import MealPlannerStack
+from stacks.most_popular_repo_bedrock_agent_stack import (
+    MostPopularRepoBedrockAgentStack,
+)
 from stacks.alarms_stack import AlarmsStack
 
 # Note: the webapp stack and trip planner stack are not tested, because they do account lookups
@@ -52,6 +55,18 @@ def test_mealplanner_stack_synthesizes_properly():
     app = cdk.App()
 
     test_stack = MealPlannerStack(
+        app,
+        "TestStack",
+    )
+
+    # Ensure the template synthesizes successfully
+    Template.from_stack(test_stack)
+
+
+def test_mostpopularrepo_bedrockagents_stack_synthesizes_properly():
+    app = cdk.App()
+
+    test_stack = MostPopularRepoBedrockAgentStack(
         app,
         "TestStack",
     )
