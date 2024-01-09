@@ -10,6 +10,9 @@ from stacks.meal_planner_stack import MealPlannerStack
 from stacks.most_popular_repo_bedrock_agent_stack import (
     MostPopularRepoBedrockAgentStack,
 )
+from stacks.most_popular_repo_langchain_stack import (
+    MostPopularRepoLangchainStack,
+)
 from stacks.alarms_stack import AlarmsStack
 
 # Note: the webapp stack and trip planner stack are not tested, because they do account lookups
@@ -67,6 +70,18 @@ def test_mostpopularrepo_bedrockagents_stack_synthesizes_properly():
     app = cdk.App()
 
     test_stack = MostPopularRepoBedrockAgentStack(
+        app,
+        "TestStack",
+    )
+
+    # Ensure the template synthesizes successfully
+    Template.from_stack(test_stack)
+
+
+def test_mostpopularrepo_langchain_stack_synthesizes_properly():
+    app = cdk.App()
+
+    test_stack = MostPopularRepoLangchainStack(
         app,
         "TestStack",
     )

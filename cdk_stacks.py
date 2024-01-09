@@ -11,6 +11,9 @@ from stacks.meal_planner_stack import MealPlannerStack
 from stacks.most_popular_repo_bedrock_agent_stack import (
     MostPopularRepoBedrockAgentStack,
 )
+from stacks.most_popular_repo_langchain_stack import (
+    MostPopularRepoLangchainStack,
+)
 from stacks.alarms_stack import AlarmsStack
 import os
 
@@ -51,6 +54,11 @@ MealPlannerStack(
 MostPopularRepoBedrockAgentStack(
     app,
     "PromptChaining-MostPopularRepoBedrockAgentsDemo",
+    env=env,
+)
+MostPopularRepoLangchainStack(
+    app,
+    "PromptChaining-MostPopularRepoLangchainDemo",
     env=env,
 )
 AlarmsStack(
