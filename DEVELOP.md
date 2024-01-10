@@ -134,7 +134,7 @@ will be created and will receive notifications about pipeline failures.
 An email address or a [chat bot](https://docs.aws.amazon.com/chatbot/latest/adminguide/setting-up.html)
 can be subscribed to the topic to receive notifications when pipeline executions fail.
 
-### Test changes locally
+### Test local changes
 
 Ensure the CDK code compiles:
 ```
@@ -146,13 +146,33 @@ Run the webapp locally:
 docker compose up --build
 ```
 
-Run the Lambda functions locally:
+Changes to Step Functions state machines and Lambda functions can be tested in the cloud using `cdk watch`,
+after the demo application has been fully deployed to an AWS account (following the instructions above):
 ```
-# Story writer
-python -c 'from agents.story_writer.characters_agent import index; print(index.handler({"story_description": "cowboys in space"}, ""))'
+cdk watch --app 'python3 cdk_stacks.py' \
+    PromptChaining-BlogPostDemo \
+    PromptChaining-TripPlannerDemo \
+    PromptChaining-StoryWriterDemo \
+    PromptChaining-MoviePitchDemo \
+    PromptChaining-MealPlannerDemo \
+    PromptChaining-MostPopularRepoBedrockAgentsDemo \
+    PromptChaining-MostPopularRepoLangchainDemo
+```
 
-# Movie pitch
-python -c 'from agents.movie_pitch.pitch_generator_agent import index; print(index.handler({"movie_description": "cowboys", "temperature": 0.5}, ""))'
+Then in a separate terminal, run test executions in the cloud after making changes to your code.
+Edit the files in the `test-inputs` directory to change the test execution inputs.
+```
+./run-test-execution.sh BlogPost
 
-python -c 'from agents.movie_pitch.pitch_chooser_agent import index; print(index.handler([{"movie_description": "cowboys", "movie_pitch": "Cowboys in space."}, {"movie_description": "cowboys", "movie_pitch": "Alien cowboys."}, {"movie_description": "cowboys", "movie_pitch": "Time-traveling cowboys."}], ""))'
+./run-test-execution.sh TripPlanner
+
+./run-test-execution.sh StoryWriter
+
+./run-test-execution.sh MoviePitch
+
+./run-test-execution.sh MealPlanner
+
+./run-test-execution.sh MostPopularRepoBedrockAgents
+
+./run-test-execution.sh MostPopularRepoLangchain
 ```

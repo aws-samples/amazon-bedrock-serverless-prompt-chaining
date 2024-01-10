@@ -5,13 +5,17 @@
       "**"
     ],
     "exclude": [
-      "README.md",
+      "*.md",
+      "LICENSE",
       "cdk*.json",
+      "pipeline",
+      "docs",
       "requirements*.txt",
       "source.bat",
       "**/__init__.py",
-      "python/__pycache__",
-      "tests"
+      "**/__pycache__",
+      "*test*",
+      "docker-compose.yml"
     ]
   },
   "context": {
