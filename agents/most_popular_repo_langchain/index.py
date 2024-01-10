@@ -76,7 +76,7 @@ def get_github_langchain_tools():
 ### Agents ###
 def lookup_trending_repo_agent(event, context):
     llm = Bedrock(
-        model_id="anthropic.claude-instant-v1",
+        model_id="anthropic.claude-v2",
         model_kwargs={
             "temperature": 0,
             "max_tokens_to_sample": 256,
