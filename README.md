@@ -162,8 +162,9 @@ The two ReAct agents each interact with GitHub APIs to get current information; 
 be able to identify the current trending repository or its current purpose.
 The first agent scrapes the [GitHub Trending](https://github.com/trending) page, and the second agent calls the GitHub API
 for [retrieving a repository README](https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#get-a-repository-readme).
-Note that LLMs are generally capable of reasoning about and answering this specific question in a single ReAct agent, by calling
-multiple GitHub APIs within the same agent. The example is simply meant to illustrate how a complex task
+
+Note that this particular example does not require chaining - it could be implemented as a single agent. LLMs are capable of reasoning about and answering this relatively simple question in a single ReAct agent, by calling
+multiple GitHub APIs within the same agent. This example is simply meant to illustrate how a complex task
 requiring ReAct prompting can be broken down into multiple chained subtasks.
 
 ![Visualization of the most popular repo workflow](/webapp/pages/workflow_images/most_popular_repo.png)
@@ -173,6 +174,8 @@ one uses [Bedrock Agents](https://aws.amazon.com/bedrock/agents/)
 and the other uses [Langchain agents](https://python.langchain.com/docs/modules/agents/agent_types/react).
 
 CDK code for Bedrock Agents version: [stacks/most_popular_repo_bedrock_agent_stack.py](stacks/most_popular_repo_bedrock_agent_stack.py)
+
+Note that Bedrock Agents does not yet support CloudFormation. The CDK stack creates all other resources required by the agent, but the agent itself must be created manually. Instructions for manually creating the agent in Bedrock Agents are [here](DEVELOP.md).
 
 CDK code for Langchain version: [stacks/most_popular_repo_langchain_stack.py](stacks/most_popular_repo_langchain_stack.py)
 
