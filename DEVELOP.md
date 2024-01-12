@@ -70,15 +70,6 @@ can be subscribed to the topic to receive notifications when the demo's alarms f
 
 Note: This is a temporary step until Bedrock Agents supports CloudFormation.
 
-Copy the agent's OpenAPI schema to your S3 bucket:
-```
-export AWS_ACCOUNT_ID=`aws sts get-caller-identity --query Account --output text`
-
-aws s3 cp --region us-west-2 \
-    agents/most_popular_repo_bedrock_agent/github_agent_actions/openapi-schema.yaml \
-    s3://serverless-prompt-chaining-$AWS_ACCOUNT_ID-us-west-2-agent-schemas/github-actions-agent-schema.yaml
-```
-
 In the [Bedrock Agents console](https://us-west-2.console.aws.amazon.com/bedrock/home?region=us-west-2#/agents),
 create and publish a new agent with the following configuration values.
 
@@ -93,7 +84,7 @@ create and publish a new agent with the following configuration values.
 | Action group name | GitHubAPIs |
 | Action group description | Use this action whenever you need to access information about GitHub repositories. |
 | Action group Lambda function | PromptChainDemo-MostPopularRepoBedrockAgents-GitHubActions |
-| Action group API schema | s3://serverless-prompt-chaining-$AWS_ACCOUNT_ID-us-west-2-agent-schemas/github-actions-agent-schema.yaml |
+| Action group API schema | Get the value from `aws cloudformation describe-stacks --stack-name PromptChaining-MostPopularRepoBedrockAgentsDemo --region us-west-2 --query 'Stacks[0].Outputs[0].OutputValue' --output text` |
 | Alias name | live |
 
 Instructions for the Agent:

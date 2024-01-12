@@ -1,15 +1,18 @@
 from aws_cdk import (
+    CfnOutput,
     Duration,
-    RemovalPolicy,
     Stack,
     aws_iam as iam,
     aws_lambda as lambda_,
     aws_lambda_python_alpha as lambda_python,
-    aws_s3 as s3,
+    aws_s3_assets as assets,
     aws_stepfunctions as sfn,
     aws_stepfunctions_tasks as tasks,
 )
 from constructs import Construct
+import os
+
+dirname = os.path.dirname(__file__)
 
 
 class MostPopularRepoBedrockAgentStack(Stack):
@@ -48,15 +51,6 @@ class MostPopularRepoBedrockAgentStack(Stack):
             )
         )
 
-        bedrock_agent_api_schemas_bucket = s3.Bucket(
-            self,
-            "ApiSchemasBucket",
-            bucket_name=f"serverless-prompt-chaining-{self.account}-{self.region}-agent-schemas",
-            removal_policy=RemovalPolicy.DESTROY,
-            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-        )
-        bedrock_agent_api_schemas_bucket.grant_read(bedrock_agent_service_role)
-
         github_agent_actions_lambda = lambda_python.PythonFunction(
             self,
             "GitHubAgentActions",
@@ -76,6 +70,21 @@ class MostPopularRepoBedrockAgentStack(Stack):
             },
         )
         github_agent_actions_lambda.grant_invoke(bedrock_principal)
+
+        agent_action_schema_asset = assets.Asset(
+            self,
+            "AgentActionSchema",
+            path=os.path.join(
+                dirname,
+                "../agents/most_popular_repo_bedrock_agent/github_agent_actions/openapi-schema.yaml",
+            ),
+        )
+        agent_action_schema_asset.grant_read(bedrock_agent_service_role)
+        CfnOutput(
+            self,
+            "BedrockAgentActionSchema",
+            value=agent_action_schema_asset.s3_object_url,
+        )
 
         ### Agents and Workflow ###
 
