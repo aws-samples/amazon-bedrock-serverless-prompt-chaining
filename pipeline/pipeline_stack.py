@@ -183,8 +183,9 @@ class PipelineStack(Stack):
                                 "sleep 15",
                                 "./run-test-execution.sh StoryWriter",
                                 "sleep 15",
-                                "./run-test-execution.sh MoviePitch",
-                                "sleep 15",
+                                # Don't test MoviePitch in the pipeline because it relies on human input
+                                # "./run-test-execution.sh MoviePitch",
+                                # "sleep 15",
                                 "./run-test-execution.sh MealPlanner",
                                 "sleep 15",
                                 "./run-test-execution.sh MostPopularRepoBedrockAgents",
@@ -215,5 +216,6 @@ class PipelineStack(Stack):
             project=test_project,
             input=source_output,
             type=actions.CodeBuildActionType.TEST,
+            run_order=2,
         )
         deploy_stage.add_action(test_action)

@@ -30,8 +30,9 @@ while true; do
             --execution-arn arn:aws:states:us-west-2:$AWS_ACCOUNT_ID:execution:PromptChainDemo-$DEMO_NAME:$EXECUTION_NAME \
             --query output \
             --output text | jq
+          exit 0
         fi
-        break
+        exit 1
     fi
     sleep 2
     echo -n '.'
