@@ -70,6 +70,7 @@ def get_claude_instant_invoke_chain(
         f"{CLAUDE_HUMAN_PROMPT}{{}}{CLAUDE_AI_PROMPT}",
         prompt,
     )
+    original_prompt = model_prompt
     if include_previous_conversation_in_prompt:
         model_prompt = sfn.JsonPath.format(
             "{}{}",
@@ -103,6 +104,7 @@ def get_claude_instant_invoke_chain(
         scope,
         id + " (Format Model Outputs)",
         parameters={
+            "prompt": original_prompt,
             "response": sfn.JsonPath.string_at("$.model_outputs.response"),
             "conversation": sfn.JsonPath.format(
                 "{}{}",

@@ -9,9 +9,7 @@ from aws_cdk import (
 from constructs import Construct
 
 from .util import (
-    add_bedrock_retries,
-    get_bedrock_iam_policy_statement,
-    get_lambda_bundling_options,
+    get_claude_instant_invoke_chain,
 )
 
 
@@ -20,79 +18,111 @@ class StoryWriterStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         # Agent #1: create characters
-        characters_lambda = lambda_python.PythonFunction(
-            self,
-            "CharacterAgent",
-            entry="agents/story_writer/characters_agent",
-            bundling=get_lambda_bundling_options(),
-            runtime=lambda_.Runtime.PYTHON_3_9,
-            timeout=Duration.seconds(60),
-            memory_size=256,
-        )
-        characters_lambda.add_to_role_policy(get_bedrock_iam_policy_statement())
-
-        characters_job = tasks.LambdaInvoke(
+        characters_job = get_claude_instant_invoke_chain(
             self,
             "Generate Characters",
-            lambda_function=characters_lambda,
-            output_path="$.Payload",
+            prompt=sfn.JsonPath.format(
+                """You are an award-winning fiction writer and you are writing a new story about {}.
+Before writing the story, describe five characters that will be in the story.
+
+Your response should be formatted as a JSON array, with each element in the array containing a "name" key for the character's name and a "description" key with the character's description.
+An example of a valid response is below, inside <example></example> XML tags.
+<example>
+[
+    \{\{
+        "name": "Character 1",
+        "description": "Description for character 1"
+    \}\},
+    \{\{
+        "name": "Character 2",
+        "description": "Description for character 2"
+    \}\}
+]
+</example>""",
+                sfn.JsonPath.string_at("$$.Execution.Input.story_description"),
+            ),
+            max_tokens_to_sample=512,
+            include_previous_conversation_in_prompt=False,
         )
-        add_bedrock_retries(characters_job)
+        parse_characters_step = sfn.Pass(
+            scope,
+            "Parse Characters",
+            parameters={
+                "characters": sfn.JsonPath.string_to_json(
+                    sfn.JsonPath.string_at("$.output.response")
+                ),
+            },
+            result_path="$.parsed_output",
+        )
 
         # Agent #2: create character story arc
-        character_story_lambda = lambda_python.PythonFunction(
-            self,
-            "CharacterStoryAgent",
-            runtime=lambda_.Runtime.PYTHON_3_9,
-            entry="agents/story_writer/character_story_agent",
-            bundling=get_lambda_bundling_options(),
-            timeout=Duration.seconds(60),
-            memory_size=256,
-        )
-        character_story_lambda.add_to_role_policy(get_bedrock_iam_policy_statement())
-
-        character_story_job = tasks.LambdaInvoke(
+        character_story_job = get_claude_instant_invoke_chain(
             self,
             "Generate Character Story Arc",
-            lambda_function=character_story_lambda,
-            output_path="$.Payload",
+            prompt=sfn.JsonPath.format(
+                "Now describe what will happen in the story to {}, who you previously described as: {}.",
+                sfn.JsonPath.string_at("$.character.name"),
+                sfn.JsonPath.string_at("$.character.description"),
+            ),
+            max_tokens_to_sample=1024,
+            include_previous_conversation_in_prompt=True,
         )
-        add_bedrock_retries(character_story_job)
 
-        # Agent #3: write the story
-        story_lambda = lambda_python.PythonFunction(
+        merge_character_stories_lambda = lambda_python.PythonFunction(
             self,
-            "StoryAgent",
+            "MergeCharacterStoriesAgent",
             runtime=lambda_.Runtime.PYTHON_3_9,
-            entry="agents/story_writer/story_agent",
-            bundling=get_lambda_bundling_options(),
-            timeout=Duration.seconds(60),
+            entry="agents/generic/merge_map_output",
             memory_size=256,
         )
-        story_lambda.add_to_role_policy(get_bedrock_iam_policy_statement())
 
-        story_job = tasks.LambdaInvoke(
+        merge_character_stories_job = tasks.LambdaInvoke(
+            self,
+            "Merge Character Stories",
+            lambda_function=merge_character_stories_lambda,
+            result_selector={"output": sfn.JsonPath.object_at("$.Payload")},
+        )
+
+        # Agent #3: write the story
+        story_job = get_claude_instant_invoke_chain(
             self,
             "Generate the Full Story",
-            lambda_function=story_lambda,
-            output_path="$.Payload",
+            prompt=sfn.JsonPath.format(
+                "Now write the short story about {}. Respond only with the story content.",
+                sfn.JsonPath.string_at("$$.Execution.Input.story_description"),
+            ),
+            max_tokens_to_sample=2048,
+            include_previous_conversation_in_prompt=True,
         )
-        add_bedrock_retries(story_job)
 
-        # Hook the agents together into a workflow that contains some loops
-        chain = characters_job.next(
-            sfn.Map(
-                self,
-                "Character Story Map",
-                items_path=sfn.JsonPath.string_at("$.characters"),
-                parameters={
-                    "character.$": "$$.Map.Item.Value",
-                    "characters.$": "$.characters",
-                    "story_description.$": "$.story_description",
-                },
-                max_concurrency=3,
-            ).iterator(character_story_job)
-        ).next(story_job)
+        select_story = sfn.Pass(
+            scope,
+            "Select Story",
+            parameters={
+                "story": sfn.JsonPath.string_at("$.output.response"),
+            },
+        )
+
+        # Hook the agents together into a workflow that contains a map
+        chain = (
+            characters_job.next(parse_characters_step)
+            .next(
+                sfn.Map(
+                    self,
+                    "Character Story Map",
+                    items_path=sfn.JsonPath.string_at("$.parsed_output.characters"),
+                    parameters={
+                        "character.$": "$$.Map.Item.Value",
+                        "output.$": "$.output",
+                        "input.$": "$.output",
+                    },
+                    max_concurrency=3,
+                ).iterator(character_story_job)
+            )
+            .next(merge_character_stories_job)
+            .next(story_job)
+            .next(select_story)
+        )
 
         sfn.StateMachine(
             self,
