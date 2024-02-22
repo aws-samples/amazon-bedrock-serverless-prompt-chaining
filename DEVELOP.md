@@ -15,9 +15,7 @@ python3 -m venv .venv
 
 source .venv/bin/activate
 
-pip install -r requirements.txt
-
-pip install boto3
+find . -name requirements.txt | xargs -I{} pip install -r {}
 ```
 After this initial setup, you only need to run `source .venv/bin/activate` to use the virtual env for further development.
 

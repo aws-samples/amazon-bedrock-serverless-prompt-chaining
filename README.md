@@ -163,7 +163,8 @@ be able to identify the current trending repository or its current purpose.
 The first agent scrapes the [GitHub Trending](https://github.com/trending) page, and the second agent calls the GitHub API
 for [retrieving a repository README](https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#get-a-repository-readme).
 
-Note that this particular example does not require chaining - it could be implemented as a single agent. LLMs are capable of reasoning about and answering this relatively simple question in a single ReAct agent, by calling
+Note that this particular example does not require chaining - it could be implemented as a single agent.
+LLMs are capable of reasoning about and answering this relatively simple question in a single ReAct agent, by calling
 multiple GitHub APIs within the same agent. This example is simply meant to illustrate how a complex task
 requiring ReAct prompting can be broken down into multiple chained subtasks.
 

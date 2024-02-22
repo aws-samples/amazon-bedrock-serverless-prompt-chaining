@@ -165,4 +165,55 @@ class PipelineStack(Stack):
         deploy_action = actions.CodeBuildAction(
             action_name="Deploy", project=deploy_project, input=source_output
         )
-        pipeline.add_stage(stage_name="Deploy", actions=[deploy_action])
+        deploy_stage = pipeline.add_stage(stage_name="Deploy", actions=[deploy_action])
+
+        # Test each demo
+        test_project = codebuild.PipelineProject(
+            self,
+            "TestDemos",
+            build_spec=codebuild.BuildSpec.from_object_to_yaml(
+                {
+                    "version": "0.2",
+                    "phases": {
+                        "build": {
+                            "commands": [
+                                "./run-test-execution.sh BlogPost",
+                                "sleep 15",
+                                "./run-test-execution.sh TripPlanner",
+                                "sleep 15",
+                                "./run-test-execution.sh StoryWriter",
+                                "sleep 15",
+                                "./run-test-execution.sh MoviePitch",
+                                "sleep 15",
+                                "./run-test-execution.sh MealPlanner",
+                                "sleep 15",
+                                "./run-test-execution.sh MostPopularRepoBedrockAgents",
+                                "sleep 15",
+                                "./run-test-execution.sh MostPopularRepoLangchain",
+                            ]
+                        },
+                    },
+                }
+            ),
+            environment=codebuild.BuildEnvironment(
+                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5
+            ),
+        )
+
+        test_project.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "states:StartExecution",
+                    "states:DescribeExecution",
+                ],
+                resources=["*"],
+            )
+        )
+
+        test_action = actions.CodeBuildAction(
+            action_name="Test",
+            project=test_project,
+            input=source_output,
+            type=actions.CodeBuildActionType.TEST,
+        )
+        deploy_stage.add_action(test_action)
