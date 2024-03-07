@@ -139,7 +139,8 @@ A small Lambda function with no LLM interaction chooses the highest-scoring meal
 and the final prompt in the chain generates a recipe for the winning meal.
 
 This example illustrates how prompt chains can incorporate two distinct AI conversations, and have
-two AI personas engage in a debate with each other to improve the final outcome.
+two AI personas engage in a ["society of minds"](https://arxiv.org/abs/2305.14325) debate with each other
+to improve the final outcome.
 This example also illustrates the ability to chain together prompts and custom code, in this case
 choosing the highest meal score.
 
