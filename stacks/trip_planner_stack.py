@@ -13,7 +13,7 @@ from constructs import Construct
 
 from .util import (
     get_lambda_bundling_options,
-    get_claude_instant_invoke_chain,
+    get_anthropic_claude_invoke_chain,
 )
 
 
@@ -22,7 +22,7 @@ class TripPlannerStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         # Agent #1: suggest places to stay
-        hotels_job = get_claude_instant_invoke_chain(
+        hotels_job = get_anthropic_claude_invoke_chain(
             self,
             "Suggest Hotels",
             prompt=sfn.JsonPath.format(
@@ -34,10 +34,11 @@ Please give me up to 5 suggestions for hotels for my vacation.""",
             ),
             max_tokens_to_sample=512,
             include_previous_conversation_in_prompt=False,
+            pass_conversation=False,
         )
 
         # Agent #2: suggest places to eat
-        restaurants_job = get_claude_instant_invoke_chain(
+        restaurants_job = get_anthropic_claude_invoke_chain(
             self,
             "Suggest Restaurants",
             prompt=sfn.JsonPath.format(
@@ -49,10 +50,11 @@ Please give me suggestions for restaurants for my vacation, including up to 5 su
             ),
             max_tokens_to_sample=512,
             include_previous_conversation_in_prompt=False,
+            pass_conversation=False,
         )
 
         # Agent #3: suggest places to visit
-        activities_job = get_claude_instant_invoke_chain(
+        activities_job = get_anthropic_claude_invoke_chain(
             self,
             "Suggest Activities",
             prompt=sfn.JsonPath.format(
@@ -64,10 +66,11 @@ Please give me up to 5 suggestions for activities to do or places to visit durin
             ),
             max_tokens_to_sample=512,
             include_previous_conversation_in_prompt=False,
+            pass_conversation=False,
         )
 
         # Agent #4: form an itinerary
-        itinerary_job = get_claude_instant_invoke_chain(
+        itinerary_job = get_anthropic_claude_invoke_chain(
             self,
             "Create an Itinerary",
             prompt=sfn.JsonPath.format(
@@ -102,6 +105,7 @@ The itinerary should be formatted in Markdown format.""",
             ),
             max_tokens_to_sample=512,
             include_previous_conversation_in_prompt=False,
+            pass_conversation=False,
         )
 
         # Final step: Create the itinerary PDF
@@ -157,7 +161,7 @@ The itinerary should be formatted in Markdown format.""",
             payload=sfn.TaskInput.from_object(
                 {
                     "location": sfn.JsonPath.string_at("$$.Execution.Input.location"),
-                    "itinerary": sfn.JsonPath.string_at("$.output.response"),
+                    "itinerary": sfn.JsonPath.string_at("$.model_outputs.response"),
                 }
             ),
         )
@@ -169,9 +173,9 @@ The itinerary should be formatted in Markdown format.""",
                     self,
                     "Suggestions",
                     result_selector={
-                        "hotels.$": "$[0].output.response",
-                        "restaurants.$": "$[1].output.response",
-                        "activities.$": "$[2].output.response",
+                        "hotels.$": "$[0].model_outputs.response",
+                        "restaurants.$": "$[1].model_outputs.response",
+                        "activities.$": "$[2].model_outputs.response",
                     },
                 )
                 .branch(hotels_job)

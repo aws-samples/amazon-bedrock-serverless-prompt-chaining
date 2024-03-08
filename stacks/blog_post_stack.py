@@ -5,7 +5,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-from .util import get_claude_instant_invoke_chain
+from .util import get_anthropic_claude_invoke_chain
 
 
 class BlogPostStack(Stack):
@@ -13,7 +13,7 @@ class BlogPostStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         # Agent #1: write book summary
-        summary_job = get_claude_instant_invoke_chain(
+        summary_job = get_anthropic_claude_invoke_chain(
             self,
             "Write a Summary",
             prompt=sfn.JsonPath.format(
@@ -24,7 +24,7 @@ class BlogPostStack(Stack):
         )
 
         # Agent #2: describe the plot
-        plot_job = get_claude_instant_invoke_chain(
+        plot_job = get_anthropic_claude_invoke_chain(
             self,
             "Describe the Plot",
             prompt=sfn.JsonPath.format(
@@ -34,7 +34,7 @@ class BlogPostStack(Stack):
         )
 
         # Agent #3: analyze key themes
-        themes_job = get_claude_instant_invoke_chain(
+        themes_job = get_anthropic_claude_invoke_chain(
             self,
             "Analyze Key Themes",
             prompt=sfn.JsonPath.format(
@@ -44,7 +44,7 @@ class BlogPostStack(Stack):
         )
 
         # Agent #4: analyze writing style
-        writing_style_job = get_claude_instant_invoke_chain(
+        writing_style_job = get_anthropic_claude_invoke_chain(
             self,
             "Analyze Writing Style",
             prompt=sfn.JsonPath.format(
@@ -54,7 +54,7 @@ class BlogPostStack(Stack):
         )
 
         # Agent #5: write the blog post
-        blog_post_job = get_claude_instant_invoke_chain(
+        blog_post_job = get_anthropic_claude_invoke_chain(
             self,
             "Write the Blog Post",
             prompt=sfn.JsonPath.format(
@@ -66,12 +66,13 @@ class BlogPostStack(Stack):
                 sfn.JsonPath.string_at("$$.Execution.Input.novel"),
             ),
             max_tokens_to_sample=1000,
+            pass_conversation=False,
         )
 
         select_final_answer = sfn.Pass(
             scope,
             "Select Final Answer",
-            output_path="$.output.response",
+            output_path="$.model_outputs.response",
         )
 
         # Hook the agents together into simple pipeline

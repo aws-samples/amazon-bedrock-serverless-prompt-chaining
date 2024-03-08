@@ -11,10 +11,9 @@ from constructs import Construct
 from collections import OrderedDict
 
 from .util import (
-    add_bedrock_retries,
-    get_claude_instant_invoke_chain,
-    CLAUDE_HUMAN_PROMPT,
-    CLAUDE_AI_PROMPT,
+    get_anthropic_claude_invoke_chain,
+    get_anthropic_claude_prepare_prompt_step,
+    get_anthropic_claude_invoke_model_step,
 )
 
 
@@ -27,71 +26,62 @@ class MoviePitchStack(Stack):
 
         temperature_settings = OrderedDict([("Red", 0), ("Blue", 0.5), ("Green", 1)])
         for temperature_name, temperature_value in temperature_settings.items():
-            generate_pitch_format_prompt = sfn.Pass(
+            generate_pitch_format_prompt = get_anthropic_claude_prepare_prompt_step(
                 self,
-                f"Generate {temperature_name} Movie Pitch (Format Model Inputs)",
-                parameters={
-                    "prompt": sfn.JsonPath.format(
-                        f"""{CLAUDE_HUMAN_PROMPT}You are an Oscar-winning screenwriter and you are pitching an idea for a new movie about {{}} to a major movie producer.
+                f"Generate {temperature_name} Movie Pitch",
+                prompt=sfn.JsonPath.format(
+                    """You are an Oscar-winning screenwriter and you are pitching an idea for a new movie about {} to a major movie producer.
 Give me your movie pitch in one paragraph.
-Start with a tagline sentence that describes the movie as a whole, then follow with a synopsis of the story and the major characters.{CLAUDE_AI_PROMPT}""",
-                        sfn.JsonPath.string_at("$$.Execution.Input.movie_description"),
-                    ),
-                    "max_tokens_to_sample": 1024,
-                    "temperature": temperature_value,
-                },
-                result_path="$.model_inputs",
+Start with a tagline sentence that describes the movie as a whole, then follow with a synopsis of the story and the major characters.""",
+                    sfn.JsonPath.string_at("$$.Execution.Input.movie_description"),
+                ),
+                include_previous_conversation_in_prompt=False,
             )
 
-            generate_next_pitch_format_prompt = sfn.Pass(
+            generate_next_pitch_format_prompt = get_anthropic_claude_prepare_prompt_step(
                 self,
-                f"Generate {temperature_name} Movie Pitch (Format Model Inputs For New Pitch)",
-                parameters={
-                    "prompt": sfn.JsonPath.format(
-                        f"""{CLAUDE_HUMAN_PROMPT}You are an Oscar-winning screenwriter and you are pitching an idea for a new movie about {{}} to a major movie producer.
+                f"Generate New {temperature_name} Movie Pitch",
+                prompt=sfn.JsonPath.format(
+                    """You are an Oscar-winning screenwriter and you are pitching an idea for a new movie about {} to a major movie producer.
 You previously pitched this idea for the movie, inside <previous_pitch></previous_pitch> XML tags. The movie producer rejected this idea and asked for a new idea.
 <previous_pitch>
-{{}}
+{}
 </previous_pitch>
 Give me your new movie pitch in one paragraph.
-Start with a tagline sentence that describes the movie as a whole, then follow with a synopsis of the story and the major characters.{CLAUDE_AI_PROMPT}""",
-                        sfn.JsonPath.string_at("$$.Execution.Input.movie_description"),
-                        sfn.JsonPath.string_at(
-                            f"$.pitches.pitch_{temperature_name.lower()}"
-                        ),
+Start with a tagline sentence that describes the movie as a whole, then follow with a synopsis of the story and the major characters.""",
+                    sfn.JsonPath.string_at("$$.Execution.Input.movie_description"),
+                    sfn.JsonPath.string_at(
+                        f"$.pitches.pitch_{temperature_name.lower()}"
                     ),
-                    "max_tokens_to_sample": 1024,
-                    "temperature": temperature_value,
-                },
-                result_path="$.model_inputs",
+                ),
+                include_previous_conversation_in_prompt=False,
             )
 
-            generate_pitch_invoke_model = tasks.BedrockInvokeModel(
+            generate_pitch_invoke_model = get_anthropic_claude_invoke_model_step(
                 self,
-                f"Generate {temperature_name} Movie Pitch (Invoke Model)",
-                model=bedrock.FoundationModel.from_foundation_model_id(
-                    self,
-                    "Model",
-                    bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_INSTANT_V1,
-                ),
-                body=sfn.TaskInput.from_json_path_at("$.model_inputs"),
-                result_selector={
+                f"Generate {temperature_name} Movie Pitch",
+                max_tokens_to_sample=1024,
+                temperature=temperature_value,
+            )
+
+            extract_pitch = sfn.Pass(
+                self,
+                f"Generate {temperature_name} Movie Pitch (Extract Pitch)",
+                parameters={
                     f"pitch_{temperature_name.lower()}": sfn.JsonPath.string_at(
-                        "$.Body.completion"
-                    )
+                        "$.model_outputs.content[0].text"
+                    ),
                 },
             )
-            add_bedrock_retries(generate_pitch_invoke_model)
+            get_pitch = generate_pitch_invoke_model.next(extract_pitch)
 
             choose_pitch_prompt = (
                 sfn.Choice(self, f"Previous {temperature_name} pitch rejected?")
                 .when(
                     sfn.Condition.is_present("$.pitches"),
-                    generate_next_pitch_format_prompt.next(generate_pitch_invoke_model),
+                    generate_next_pitch_format_prompt.next(get_pitch),
                 )
-                .otherwise(
-                    generate_pitch_format_prompt.next(generate_pitch_invoke_model),
-                )
+                .otherwise(generate_pitch_format_prompt.next(get_pitch))
             )
 
             movie_pitch_generators = movie_pitch_generators.branch(choose_pitch_prompt)
@@ -111,7 +101,7 @@ Start with a tagline sentence that describes the movie as a whole, then follow w
         )
 
         # Step #2: Let the model choose the best movie pitch out of the generated set
-        pitch_chooser_prompt = f"""{CLAUDE_HUMAN_PROMPT}You are a producer of Oscar-winning movies, and you are deciding on the next movie you will make.
+        pitch_chooser_prompt = f"""You are a producer of Oscar-winning movies, and you are deciding on the next movie you will make.
 Screenwriters previously pitched you on {len(temperature_settings)} movie ideas, and you need to pick one of the ideas."""
         pitch_chooser_prompt_arguments = []
 
@@ -133,37 +123,17 @@ Screenwriters previously pitched you on {len(temperature_settings)} movie ideas,
         for i, temperature_name in enumerate(temperature_settings.keys()):
             pitch_chooser_prompt += f"\n({i+1}) Movie pitch {temperature_name}"
 
-        pitch_chooser_prompt += f"{CLAUDE_AI_PROMPT} My choice is ("
-
-        pitch_chooser_format_prompt = sfn.Pass(
+        pitch_chooser_job = get_anthropic_claude_invoke_chain(
             self,
-            "Choose Best Movie Pitch (Format Model Inputs)",
-            parameters={
-                "pitches": sfn.JsonPath.object_at("$.pitches"),
-                "model_inputs": {
-                    "prompt": sfn.JsonPath.format(
-                        pitch_chooser_prompt,
-                        *pitch_chooser_prompt_arguments,
-                    ),
-                    "max_tokens_to_sample": 300,
-                    "temperature": 0.3,
-                },
-            },
+            "Choose Best Movie Pitch",
+            pitch_chooser_prompt,
+            initial_assistant_text="My choice is (",
+            include_initial_assistant_text_in_response=False,
+            max_tokens_to_sample=300,
+            temperature=0.3,
+            include_previous_conversation_in_prompt=False,
+            pass_conversation=False,
         )
-
-        pitch_chooser_job = tasks.BedrockInvokeModel(
-            self,
-            "Choose Best Movie Pitch (Invoke Model)",
-            model=bedrock.FoundationModel.from_foundation_model_id(
-                self,
-                "Model",
-                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_INSTANT_V1,
-            ),
-            body=sfn.TaskInput.from_json_path_at("$.model_inputs"),
-            result_selector={"response": sfn.JsonPath.string_at("$.Body.completion")},
-            result_path="$.model_outputs",
-        )
-        add_bedrock_retries(pitch_chooser_job)
 
         # Step #3: Let the human user decide whether to greenlight the movie pitch.
         # Create a task token so that the user can decide whether to accept the movie pitch or not.
@@ -221,7 +191,7 @@ Screenwriters previously pitched you on {len(temperature_settings)} movie ideas,
         )
 
         # Step #4: Develop the movie idea into a one-pager
-        pitch_one_pager_job = get_claude_instant_invoke_chain(
+        pitch_one_pager_job = get_anthropic_claude_invoke_chain(
             self,
             "Generate Movie Pitch One-Pager",
             prompt=sfn.JsonPath.format(
@@ -236,13 +206,16 @@ Now create a one-page movie pitch, based on your previous short description for 
             ),
             max_tokens_to_sample=2048,
             include_previous_conversation_in_prompt=False,
+            pass_conversation=False,
         )
 
         select_movie_pitch = sfn.Pass(
-            scope,
+            self,
             "Select Movie Pitch",
             parameters={
-                "movie_pitch_one_pager": sfn.JsonPath.string_at("$.output.response"),
+                "movie_pitch_one_pager": sfn.JsonPath.string_at(
+                    "$.model_outputs.response"
+                ),
             },
         )
 
@@ -270,7 +243,6 @@ Now create a one-page movie pitch, based on your previous short description for 
 
         chain = (
             movie_pitch_generators.next(merge_pitches)
-            .next(pitch_chooser_format_prompt)
             .next(pitch_chooser_job)
             .next(start_user_choice_fork)
         )

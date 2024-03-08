@@ -9,7 +9,7 @@ from aws_cdk import (
 from constructs import Construct
 
 from .util import (
-    get_claude_instant_invoke_chain,
+    get_anthropic_claude_invoke_chain,
 )
 
 
@@ -18,7 +18,7 @@ class StoryWriterStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         # Agent #1: create characters
-        characters_job = get_claude_instant_invoke_chain(
+        characters_job = get_anthropic_claude_invoke_chain(
             self,
             "Generate Characters",
             prompt=sfn.JsonPath.format(
@@ -49,14 +49,14 @@ An example of a valid response is below, inside <example></example> XML tags.
             "Parse Characters",
             parameters={
                 "characters": sfn.JsonPath.string_to_json(
-                    sfn.JsonPath.string_at("$.output.response")
+                    sfn.JsonPath.string_at("$.model_outputs.response")
                 ),
             },
             result_path="$.parsed_output",
         )
 
         # Agent #2: create character story arc
-        character_story_job = get_claude_instant_invoke_chain(
+        character_story_job = get_anthropic_claude_invoke_chain(
             self,
             "Generate Character Story Arc",
             prompt=sfn.JsonPath.format(
@@ -80,11 +80,11 @@ An example of a valid response is below, inside <example></example> XML tags.
             self,
             "Merge Character Stories",
             lambda_function=merge_character_stories_lambda,
-            result_selector={"output": sfn.JsonPath.object_at("$.Payload")},
+            result_selector={"model_outputs": sfn.JsonPath.object_at("$.Payload")},
         )
 
         # Agent #3: write the story
-        story_job = get_claude_instant_invoke_chain(
+        story_job = get_anthropic_claude_invoke_chain(
             self,
             "Generate the Full Story",
             prompt=sfn.JsonPath.format(
@@ -93,13 +93,14 @@ An example of a valid response is below, inside <example></example> XML tags.
             ),
             max_tokens_to_sample=2048,
             include_previous_conversation_in_prompt=True,
+            pass_conversation=False,
         )
 
         select_story = sfn.Pass(
             scope,
             "Select Story",
             parameters={
-                "story": sfn.JsonPath.string_at("$.output.response"),
+                "story": sfn.JsonPath.string_at("$.model_outputs.response"),
             },
         )
 
@@ -113,8 +114,7 @@ An example of a valid response is below, inside <example></example> XML tags.
                     items_path=sfn.JsonPath.string_at("$.parsed_output.characters"),
                     parameters={
                         "character.$": "$$.Map.Item.Value",
-                        "output.$": "$.output",
-                        "input.$": "$.output",
+                        "model_outputs.$": "$.model_outputs",
                     },
                     max_concurrency=3,
                 ).iterator(character_story_job)
