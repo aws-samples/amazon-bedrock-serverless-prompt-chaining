@@ -205,6 +205,11 @@ def get_anthropic_claude_invoke_chain(
     include_previous_conversation_in_prompt: typing.Optional[bool] = True,
     pass_conversation: typing.Optional[bool] = True,
 ):
+    if initial_assistant_text and pass_conversation:
+        raise ValueError(
+            'initial_assistant_text cannot be used with pass_conversation. This combination results in a runtime error from Bedrock: `messages: roles must alternate between "user" and "assistant", but found multiple "assistant" roles in a row`'
+        )
+
     format_prompt = get_anthropic_claude_prepare_prompt_step(
         scope,
         id,
