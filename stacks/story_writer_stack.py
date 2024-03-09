@@ -29,14 +29,14 @@ Your response should be formatted as a JSON array, with each element in the arra
 An example of a valid response is below, inside <example></example> XML tags.
 <example>
 [
-    \{\{
+    \{
         "name": "Character 1",
         "description": "Description for character 1"
-    \}\},
-    \{\{
+    \},
+    \{
         "name": "Character 2",
         "description": "Description for character 2"
-    \}\}
+    \}
 ]
 </example>""",
                 sfn.JsonPath.string_at("$$.Execution.Input.story_description"),
