@@ -126,7 +126,9 @@ Screenwriters previously pitched you on {len(temperature_settings)} movie ideas,
         pitch_chooser_job = get_anthropic_claude_invoke_chain(
             self,
             "Choose Best Movie Pitch",
-            pitch_chooser_prompt,
+            prompt=sfn.JsonPath.format(
+                pitch_chooser_prompt, *pitch_chooser_prompt_arguments
+            ),
             initial_assistant_text="My choice is (",
             include_initial_assistant_text_in_response=False,
             max_tokens_to_sample=300,
