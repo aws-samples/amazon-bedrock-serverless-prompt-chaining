@@ -61,6 +61,8 @@ def get_anthropic_claude_prepare_prompt_step(
     prompt: builtins.str,
     include_previous_conversation_in_prompt: bool,
     initial_assistant_text: typing.Optional[str] = "",
+    input_json_path: typing.Optional[str] = "$.model_inputs",
+    output_json_path: typing.Optional[str] = "$.model_outputs",
 ):
     messages = [
         {
@@ -83,7 +85,7 @@ def get_anthropic_claude_prepare_prompt_step(
         parameters={
             "messages": messages,
         },
-        result_path="$.model_inputs",
+        result_path=input_json_path,
     )
     if include_previous_conversation_in_prompt:
         insert_conversation = sfn.Pass(
@@ -91,11 +93,11 @@ def get_anthropic_claude_prepare_prompt_step(
             id + " (Include Previous Messages)",
             parameters={
                 "messages": sfn.JsonPath.array(
-                    sfn.JsonPath.string_at("$.model_outputs.conversation"),
-                    sfn.JsonPath.string_at("$.model_inputs.messages"),
+                    sfn.JsonPath.string_at(f"{output_json_path}.conversation"),
+                    sfn.JsonPath.string_at(f"{input_json_path}.messages"),
                 ),
             },
-            result_path="$.model_inputs",
+            result_path=input_json_path,
         )
         format_prompt = format_prompt.next(insert_conversation)
     return format_prompt
@@ -108,6 +110,8 @@ def get_anthropic_claude_invoke_model_step(
     max_tokens_to_sample: typing.Optional[int] = 250,
     temperature: typing.Optional[float] = 1,
     flatten_messages: typing.Optional[bool] = False,
+    input_json_path: typing.Optional[str] = "$.model_inputs",
+    output_json_path: typing.Optional[str] = "$.model_outputs",
 ):
     invoke_model = tasks.BedrockInvokeModel(
         scope,
@@ -121,9 +125,9 @@ def get_anthropic_claude_invoke_model_step(
             {
                 "anthropic_version": "bedrock-2023-05-31",
                 "messages": (
-                    sfn.JsonPath.object_at("$.model_inputs.messages[*][*]")
+                    sfn.JsonPath.object_at(f"{input_json_path}.messages[*][*]")
                     if flatten_messages
-                    else sfn.JsonPath.object_at("$.model_inputs.messages")
+                    else sfn.JsonPath.object_at(f"{input_json_path}.messages")
                 ),
                 "max_tokens": max_tokens_to_sample,
                 "temperature": temperature,
@@ -133,7 +137,7 @@ def get_anthropic_claude_invoke_model_step(
             "role": sfn.JsonPath.string_at("$.Body.role"),
             "content": sfn.JsonPath.string_at("$.Body.content"),
         },
-        result_path="$.model_outputs",
+        result_path=output_json_path,
     )
     add_bedrock_retries(invoke_model)
     return invoke_model
@@ -146,8 +150,10 @@ def get_anthropic_claude_extract_response_step(
     initial_assistant_text: typing.Optional[str] = "",
     flatten_messages: typing.Optional[bool] = False,
     pass_conversation: typing.Optional[bool] = True,
+    input_json_path: typing.Optional[str] = "$.model_inputs",
+    output_json_path: typing.Optional[str] = "$.model_outputs",
 ):
-    response_value = sfn.JsonPath.string_at("$.model_outputs.content[0].text")
+    response_value = sfn.JsonPath.string_at(f"{output_json_path}.content[0].text")
     if initial_assistant_text:
         response_value = sfn.JsonPath.format(
             "{}{}", initial_assistant_text, response_value
@@ -158,11 +164,11 @@ def get_anthropic_claude_extract_response_step(
         "response": response_value,
         "conversation": sfn.JsonPath.array(
             (
-                sfn.JsonPath.string_at("$.model_inputs.messages[*][*]")
+                sfn.JsonPath.string_at(f"{input_json_path}.messages[*][*]")
                 if flatten_messages
-                else sfn.JsonPath.string_at("$.model_inputs.messages")
+                else sfn.JsonPath.string_at(f"{input_json_path}.messages")
             ),
-            sfn.JsonPath.array(sfn.JsonPath.string_at("$.model_outputs")),
+            sfn.JsonPath.array(sfn.JsonPath.string_at(output_json_path)),
         ),
     }
     if not pass_conversation:
@@ -172,7 +178,7 @@ def get_anthropic_claude_extract_response_step(
         scope,
         id + " (Extract Model Response)",
         parameters=extract_response_parameters,
-        result_path="$.model_outputs",
+        result_path=output_json_path,
     )
 
     if pass_conversation:
@@ -180,13 +186,13 @@ def get_anthropic_claude_extract_response_step(
             scope,
             id + " (Prepare Output)",
             parameters={
-                "prompt": sfn.JsonPath.string_at("$.model_outputs.prompt"),
-                "response": sfn.JsonPath.string_at("$.model_outputs.response"),
+                "prompt": sfn.JsonPath.string_at(f"{output_json_path}.prompt"),
+                "response": sfn.JsonPath.string_at(f"{output_json_path}.response"),
                 "conversation": sfn.JsonPath.object_at(
-                    "$.model_outputs.conversation[*][*]"
+                    f"{output_json_path}.conversation[*][*]"
                 ),
             },
-            result_path="$.model_outputs",
+            result_path=output_json_path,
         )
         extract_response = extract_response.next(prepare_outputs)
 
@@ -204,6 +210,8 @@ def get_anthropic_claude_invoke_chain(
     temperature: typing.Optional[float] = 1,
     include_previous_conversation_in_prompt: typing.Optional[bool] = True,
     pass_conversation: typing.Optional[bool] = True,
+    input_json_path: typing.Optional[str] = "$.model_inputs",
+    output_json_path: typing.Optional[str] = "$.model_outputs",
 ):
     if initial_assistant_text and pass_conversation:
         raise ValueError(
@@ -216,6 +224,8 @@ def get_anthropic_claude_invoke_chain(
         prompt,
         include_previous_conversation_in_prompt=include_previous_conversation_in_prompt,
         initial_assistant_text=initial_assistant_text,
+        input_json_path=input_json_path,
+        output_json_path=output_json_path,
     )
 
     invoke_model = get_anthropic_claude_invoke_model_step(
@@ -225,6 +235,8 @@ def get_anthropic_claude_invoke_chain(
         max_tokens_to_sample=max_tokens_to_sample,
         temperature=temperature,
         flatten_messages=include_previous_conversation_in_prompt,
+        input_json_path=input_json_path,
+        output_json_path=output_json_path,
     )
 
     extract_response = get_anthropic_claude_extract_response_step(
@@ -236,6 +248,8 @@ def get_anthropic_claude_invoke_chain(
         ),
         flatten_messages=include_previous_conversation_in_prompt,
         pass_conversation=pass_conversation,
+        input_json_path=input_json_path,
+        output_json_path=output_json_path,
     )
 
     return format_prompt.next(invoke_model).next(extract_response)
