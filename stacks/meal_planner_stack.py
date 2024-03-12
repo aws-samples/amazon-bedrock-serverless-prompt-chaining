@@ -320,7 +320,7 @@ Do not include any other content outside of the JSON object.
             self,
             "MealChooseAgent",
             runtime=lambda_.Runtime.PYTHON_3_9,
-            entry="agents/meal_planner/meal_choose_winner_agent",
+            entry="functions/meal_planner/meal_choose_winner_agent",
             bundling=get_lambda_bundling_options(),
             timeout=Duration.seconds(60),
             memory_size=256,

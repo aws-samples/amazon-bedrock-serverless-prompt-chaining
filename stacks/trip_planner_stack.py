@@ -137,7 +137,7 @@ The itinerary should be formatted in Markdown format.""",
             self,
             "PdfCreator",
             runtime=lambda_.Runtime.PYTHON_3_8,  # This must be Python 3.8 for the Weasyprint layer
-            entry="agents/trip_planner/pdf_creator",
+            entry="functions/trip_planner/pdf_creator",
             bundling=get_lambda_bundling_options(),
             environment={
                 "PDF_BUCKET": pdf_bucket.bucket_name,

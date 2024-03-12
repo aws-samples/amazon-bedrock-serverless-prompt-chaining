@@ -56,7 +56,7 @@ class MostPopularRepoBedrockAgentStack(Stack):
             "GitHubAgentActions",
             function_name="PromptChainDemo-MostPopularRepoBedrockAgents-GitHubActions",
             runtime=lambda_.Runtime.PYTHON_3_9,
-            entry="agents/most_popular_repo_bedrock_agent/github_agent_actions",
+            entry="functions/most_popular_repo_bedrock_agent/github_agent_actions",
             timeout=Duration.seconds(60),
             memory_size=512,
         )
@@ -76,7 +76,7 @@ class MostPopularRepoBedrockAgentStack(Stack):
             "AgentActionSchema",
             path=os.path.join(
                 dirname,
-                "../agents/most_popular_repo_bedrock_agent/github_agent_actions/openapi-schema.yaml",
+                "../functions/most_popular_repo_bedrock_agent/github_agent_actions/openapi-schema.yaml",
             ),
         )
         agent_action_schema_asset.grant_read(bedrock_agent_service_role)
@@ -93,7 +93,7 @@ class MostPopularRepoBedrockAgentStack(Stack):
             self,
             "LookupRepoAgent",
             runtime=lambda_.Runtime.PYTHON_3_9,
-            entry="agents/most_popular_repo_bedrock_agent/agent",
+            entry="functions/most_popular_repo_bedrock_agent/agent",
             handler="lookup_trending_repo_agent",
             bundling=lambda_python.BundlingOptions(
                 asset_excludes=[".venv", ".mypy_cache", "__pycache__"],
@@ -119,7 +119,7 @@ class MostPopularRepoBedrockAgentStack(Stack):
             self,
             "SummarizeRepoAgent",
             runtime=lambda_.Runtime.PYTHON_3_9,
-            entry="agents/most_popular_repo_bedrock_agent/agent",
+            entry="functions/most_popular_repo_bedrock_agent/agent",
             handler="summarize_repo_readme_agent",
             bundling=lambda_python.BundlingOptions(
                 asset_excludes=[".venv", ".mypy_cache", "__pycache__"],

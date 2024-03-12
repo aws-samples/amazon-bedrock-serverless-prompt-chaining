@@ -19,67 +19,37 @@ updates:
   open-pull-requests-limit: 10
   versioning-strategy: increase
 - package-ecosystem: pip
-  directory: "/agents/meal_planner/meal_generator_agent"
+  directory: "/functions/meal_planner/meal_choose_winner_agent"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
 - package-ecosystem: pip
-  directory: "/agents/meal_planner/meal_choose_winner_agent"
+  directory: "/functions/generic/seek_user_input"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
 - package-ecosystem: pip
-  directory: "/agents/meal_planner/meal_debater_agent"
+  directory: "/functions/trip_planner/pdf_creator"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
 - package-ecosystem: pip
-  directory: "/agents/meal_planner/meal_debate_referee_agent"
+  directory: "/functions/most_popular_repo_bedrock_agent/github_agent_actions"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
 - package-ecosystem: pip
-  directory: "/agents/meal_planner/recipe_generator"
+  directory: "/functions/most_popular_repo_bedrock_agent/agent"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
 - package-ecosystem: pip
-  directory: "/agents/meal_planner/meal_scoring_agent"
-  schedule:
-    interval: monthly
-  open-pull-requests-limit: 10
-  versioning-strategy: increase
-- package-ecosystem: pip
-  directory: "/agents/movie_pitch/seek_user_input"
-  schedule:
-    interval: monthly
-  open-pull-requests-limit: 10
-  versioning-strategy: increase
-- package-ecosystem: pip
-  directory: "/agents/trip_planner/pdf_creator"
-  schedule:
-    interval: monthly
-  open-pull-requests-limit: 10
-  versioning-strategy: increase
-- package-ecosystem: pip
-  directory: "/agents/most_popular_repo_bedrock_agent/github_agent_actions"
-  schedule:
-    interval: monthly
-  open-pull-requests-limit: 10
-  versioning-strategy: increase
-- package-ecosystem: pip
-  directory: "/agents/most_popular_repo_bedrock_agent/agent"
-  schedule:
-    interval: monthly
-  open-pull-requests-limit: 10
-  versioning-strategy: increase
-- package-ecosystem: pip
-  directory: "/agents/most_popular_repo_langchain"
+  directory: "/functions/most_popular_repo_langchain"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10

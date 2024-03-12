@@ -72,7 +72,7 @@ An example of a valid response is below, inside <example></example> XML tags.
             self,
             "MergeCharacterStoriesAgent",
             runtime=lambda_.Runtime.PYTHON_3_9,
-            entry="agents/generic/merge_map_output",
+            entry="functions/generic/merge_map_output",
             memory_size=256,
         )
 

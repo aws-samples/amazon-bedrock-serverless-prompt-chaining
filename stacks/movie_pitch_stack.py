@@ -143,7 +143,7 @@ Screenwriters previously pitched you on {len(temperature_settings)} movie ideas,
             self,
             "UserProducerChoiceAgent",
             runtime=lambda_.Runtime.PYTHON_3_9,
-            entry="agents/movie_pitch/seek_user_input",
+            entry="functions/generic/seek_user_input",
             timeout=Duration.seconds(5),
             memory_size=128,
         )
