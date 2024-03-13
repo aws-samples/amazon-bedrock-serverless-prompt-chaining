@@ -2,6 +2,7 @@ from aws_cdk import (
     Duration,
     aws_bedrock as bedrock,
     aws_iam as iam,
+    aws_lambda as lambda_,
     aws_lambda_python_alpha as lambda_python,
     aws_stepfunctions as sfn,
     aws_stepfunctions_tasks as tasks,
@@ -253,3 +254,36 @@ def get_anthropic_claude_invoke_chain(
     )
 
     return format_prompt.next(invoke_model).next(extract_response)
+
+
+def get_json_parser_step(
+    scope: Construct,
+    id: builtins.str,
+    response_string: builtins.str,
+    json_schema: typing.Any,
+    output_key: builtins.str,
+    result_path: builtins.str,
+):
+    parser_lambda = lambda_python.PythonFunction(
+        scope,
+        "".join(id.split()) + "Function",
+        runtime=lambda_.Runtime.PYTHON_3_9,
+        entry="functions/generic/parse_json_response",
+        memory_size=256,
+    )
+
+    parser_job = tasks.LambdaInvoke(
+        scope,
+        id,
+        lambda_function=parser_lambda,
+        payload=sfn.TaskInput.from_object(
+            {
+                "response_string": response_string,
+                "json_schema": json_schema,
+            }
+        ),
+        result_selector={output_key: sfn.JsonPath.object_at("$.Payload")},
+        result_path=result_path,
+    )
+
+    return parser_job

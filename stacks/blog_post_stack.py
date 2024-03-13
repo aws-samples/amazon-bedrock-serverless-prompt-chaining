@@ -70,7 +70,7 @@ class BlogPostStack(Stack):
         )
 
         select_final_answer = sfn.Pass(
-            scope,
+            self,
             "Select Final Answer",
             output_path="$.model_outputs.response",
         )

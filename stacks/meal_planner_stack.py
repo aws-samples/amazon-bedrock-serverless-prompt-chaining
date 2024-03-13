@@ -11,6 +11,7 @@ from constructs import Construct
 from .util import (
     get_lambda_bundling_options,
     get_anthropic_claude_invoke_chain,
+    get_json_parser_step,
 )
 
 
@@ -53,7 +54,7 @@ Do not provide a full recipe, only provide a one or two sentence description of 
 
         # Agent #2: score the meals generated
         initialize_debate = sfn.Pass(
-            scope,
+            self,
             "Initialize Debate",
             parameters={"debate_round": 0},
             result_path="$.debate_state",
@@ -110,14 +111,30 @@ Do not include any other content outside of the JSON object.
             pass_conversation=False,
         )
 
-        parse_meal_scores = sfn.Pass(
-            scope,
+        meal_scores_json_schema = {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": False,
+        }
+        for chef in chefs:
+            meal_scores_json_schema["properties"][f"{chef}_chef"] = {
+                "type": "object",
+                "properties": {
+                    "score": {"type": "number"},
+                    "score_reasoning": {"type": "string"},
+                },
+                "required": ["score", "score_reasoning"],
+                "additionalProperties": False,
+            }
+            meal_scores_json_schema["required"].append(f"{chef}_chef")
+
+        parse_meal_scores = get_json_parser_step(
+            self,
             "Parse Meal Scores",
-            parameters={
-                "scores": sfn.JsonPath.string_to_json(
-                    sfn.JsonPath.string_at("$.model_outputs.response")
-                ),
-            },
+            response_string=sfn.JsonPath.string_at("$.model_outputs.response"),
+            json_schema=meal_scores_json_schema,
+            output_key="scores",
             result_path="$.parsed_output",
         )
 
@@ -225,7 +242,7 @@ Do not provide a full recipe, only provide a one or two sentence description of 
                 f"$.meal_debate_results.{chef}_chef"
             )
         increment_debate_counter = sfn.Pass(
-            scope,
+            self,
             "Increment Debate Counter",
             parameters=debate_counter_params,
         )
@@ -282,14 +299,20 @@ Do not include any other content outside of the JSON object.
             pass_conversation=False,
         )
 
-        parse_referee_response = sfn.Pass(
-            scope,
+        parse_referee_response = get_json_parser_step(
+            self,
             "Parse Referee Response",
-            parameters={
-                "consensus": sfn.JsonPath.string_to_json(
-                    sfn.JsonPath.string_at("$.model_outputs.response")
-                ),
+            response_string=sfn.JsonPath.string_at("$.model_outputs.response"),
+            json_schema={
+                "type": "object",
+                "properties": {
+                    "reasoning": {"type": "string"},
+                    "do_chefs_agree": {"type": "string", "enum": ["yes", "no"]},
+                },
+                "required": ["reasoning", "do_chefs_agree"],
+                "additionalProperties": False,
             },
+            output_key="consensus",
             result_path="$.referee_output",
         )
 
@@ -304,14 +327,13 @@ Do not include any other content outside of the JSON object.
             include_previous_conversation_in_prompt=False,
             pass_conversation=False,
         )
-        parse_final_meal_scores = sfn.Pass(
-            scope,
+
+        parse_final_meal_scores = get_json_parser_step(
+            self,
             "Parse Final Meal Scores",
-            parameters={
-                "scores": sfn.JsonPath.string_to_json(
-                    sfn.JsonPath.string_at("$.model_outputs.response")
-                ),
-            },
+            response_string=sfn.JsonPath.string_at("$.model_outputs.response"),
+            json_schema=meal_scores_json_schema,
+            output_key="scores",
             result_path="$.parsed_output",
         )
 
@@ -357,7 +379,7 @@ Create a recipe for this meal, based on your previous meal suggestion and the in
         )
 
         select_final_response = sfn.Pass(
-            scope,
+            self,
             "Extract Recipe",
             parameters={
                 "recipe": sfn.JsonPath.string_at("$.model_outputs.response"),
