@@ -11,7 +11,7 @@ from constructs import Construct
 from .util import (
     get_lambda_bundling_options,
     get_anthropic_claude_invoke_chain,
-    get_json_parser_step,
+    get_json_response_parser_step,
 )
 
 
@@ -108,7 +108,6 @@ Do not include any other content outside of the JSON object.
             ),
             max_tokens_to_sample=500,
             include_previous_conversation_in_prompt=False,
-            pass_conversation=False,
         )
 
         meal_scores_json_schema = {
@@ -129,10 +128,9 @@ Do not include any other content outside of the JSON object.
             }
             meal_scores_json_schema["required"].append(f"{chef}_chef")
 
-        parse_meal_scores = get_json_parser_step(
+        parse_meal_scores = get_json_response_parser_step(
             self,
             "Parse Meal Scores",
-            response_string=sfn.JsonPath.string_at("$.model_outputs.response"),
             json_schema=meal_scores_json_schema,
             output_key="scores",
             result_path="$.parsed_output",
@@ -296,13 +294,11 @@ Do not include any other content outside of the JSON object.
             prompt=sfn.JsonPath.format(referee_prompt, *referee_prompt_arguments),
             max_tokens_to_sample=500,
             include_previous_conversation_in_prompt=False,
-            pass_conversation=False,
         )
 
-        parse_referee_response = get_json_parser_step(
+        parse_referee_response = get_json_response_parser_step(
             self,
             "Parse Referee Response",
-            response_string=sfn.JsonPath.string_at("$.model_outputs.response"),
             json_schema={
                 "type": "object",
                 "properties": {
@@ -325,13 +321,11 @@ Do not include any other content outside of the JSON object.
             ),
             max_tokens_to_sample=500,
             include_previous_conversation_in_prompt=False,
-            pass_conversation=False,
         )
 
-        parse_final_meal_scores = get_json_parser_step(
+        parse_final_meal_scores = get_json_response_parser_step(
             self,
             "Parse Final Meal Scores",
-            response_string=sfn.JsonPath.string_at("$.model_outputs.response"),
             json_schema=meal_scores_json_schema,
             output_key="scores",
             result_path="$.parsed_output",

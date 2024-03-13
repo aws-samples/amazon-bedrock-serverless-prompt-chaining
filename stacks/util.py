@@ -11,6 +11,7 @@ from constructs import Construct
 import builtins
 import typing
 import jsii
+import json
 
 
 @jsii.implements(lambda_python.ICommandHooks)
@@ -256,14 +257,20 @@ def get_anthropic_claude_invoke_chain(
     return format_prompt.next(invoke_model).next(extract_response)
 
 
-def get_json_parser_step(
+def get_json_response_parser_step(
     scope: Construct,
     id: builtins.str,
-    response_string: builtins.str,
     json_schema: typing.Any,
     output_key: builtins.str,
     result_path: builtins.str,
 ):
+    initialize_parse_attempt_counter = sfn.Pass(
+        scope,
+        id + " - Initialize Parsing Error Counter",
+        parameters={"parse_error_count": 0},
+        result_path="$.error_state",
+    )
+
     parser_lambda = lambda_python.PythonFunction(
         scope,
         "".join(id.split()) + "Function",
@@ -278,12 +285,71 @@ def get_json_parser_step(
         lambda_function=parser_lambda,
         payload=sfn.TaskInput.from_object(
             {
-                "response_string": response_string,
+                "response_string": sfn.JsonPath.string_at("$.model_outputs.response"),
                 "json_schema": json_schema,
             }
         ),
-        result_selector={output_key: sfn.JsonPath.object_at("$.Payload")},
+        result_selector={
+            output_key: sfn.JsonPath.object_at("$.Payload"),
+        },
         result_path=result_path,
     )
 
-    return parser_job
+    parse_error_message = sfn.Pass(
+        scope,
+        id + " - Parse Error Message",
+        parameters={
+            "parsed_error": sfn.JsonPath.string_to_json(
+                sfn.JsonPath.string_at("$.caught_error.Cause")
+            ),
+            "parse_error_count": sfn.JsonPath.math_add(
+                sfn.JsonPath.number_at("$.error_state.parse_error_count"), 1
+            ),
+        },
+        result_path="$.error_state",
+    )
+
+    fix_json = get_anthropic_claude_invoke_chain(
+        scope,
+        id + " - Fix JSON",
+        prompt=sfn.JsonPath.format(
+            f"""I attempted to validate your response against my JSON schema, but received the following error inside <error></error> XML tags.
+<error>
+{{}}
+
+{{}}
+</error>
+
+Here is my JSON schema, inside <schema></schema> XML tags:
+<schema>
+{json.dumps(json_schema, indent=2).replace("{", chr(92) + "{").replace("}", chr(92) + "}")}
+</schema>
+
+Please try to fix errors in the JSON response you gave previously and return a new JSON response that complies with the JSON schema.
+Do NOT include any explanation, comments, apology, or markdown style code-back-ticks.
+Remember - only return a valid JSON object.""",
+            sfn.JsonPath.string_at("$.error_state.parsed_error.errorType"),
+            sfn.JsonPath.string_at("$.error_state.parsed_error.errorMessage"),
+        ),
+        max_tokens_to_sample=500,
+        temperature=0,
+        include_previous_conversation_in_prompt=True,
+        pass_conversation=True,
+    )
+
+    attempt_to_fix_json = parse_error_message.next(
+        sfn.Choice(scope, id + " - Too many attempts to fix?")
+        .when(
+            sfn.Condition.number_less_than("$.error_state.parse_error_count", 3),
+            fix_json.next(parser_job),
+        )
+        .otherwise(sfn.Fail(scope, id + " - Fail"))
+    )
+
+    parser_job.add_catch(
+        handler=attempt_to_fix_json,
+        errors=[sfn.Errors.TASKS_FAILED],
+        result_path="$.caught_error",
+    )
+
+    return initialize_parse_attempt_counter.next(parser_job)

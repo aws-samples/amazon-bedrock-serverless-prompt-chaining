@@ -10,7 +10,7 @@ from constructs import Construct
 
 from .util import (
     get_anthropic_claude_invoke_chain,
-    get_json_parser_step,
+    get_json_response_parser_step,
 )
 
 
@@ -48,10 +48,9 @@ Do not include any other content outside of the JSON object.
             include_previous_conversation_in_prompt=False,
         )
 
-        parse_characters_step = get_json_parser_step(
+        parse_characters_step = get_json_response_parser_step(
             self,
             "Parse Characters",
-            response_string=sfn.JsonPath.string_at("$.model_outputs.response"),
             json_schema={
                 "type": "array",
                 "items": {
