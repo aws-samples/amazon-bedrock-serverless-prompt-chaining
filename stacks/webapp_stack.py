@@ -5,6 +5,7 @@ from aws_cdk import (
     aws_certificatemanager as acm,
     aws_cognito as cognito,
     aws_ec2 as ec2,
+    aws_ecr_assets as ecr_assets,
     aws_ecs as ecs,
     aws_ecs_patterns as ecs_patterns,
     aws_elasticloadbalancingv2 as elb,
@@ -42,7 +43,9 @@ class WebappStack(Stack):
 
         cluster = ecs.Cluster(self, "Cluster", vpc=vpc)
 
-        image = ecs.ContainerImage.from_asset(".")
+        image = ecs.ContainerImage.from_asset(
+            ".", platform=ecr_assets.Platform.LINUX_AMD64
+        )
 
         fargate_service = ecs_patterns.ApplicationLoadBalancedFargateService(
             self,
