@@ -57,10 +57,8 @@ class AwsServiceInvocationChain(Stack):
             topic=topic,
             message=sfn.TaskInput.from_object(
                 {
-                    "summary": sfn.TaskInput.from_json_path_at(
-                        "$.Body.content[0].text"
-                    ),
-                    "book": sfn.TaskInput.from_json_path_at("$$.Execution.Input"),
+                    "summary": sfn.JsonPath.string_at("$.Body.content[0].text"),
+                    "book": sfn.JsonPath.string_at("$$.Execution.Input"),
                 }
             ),
             result_path=sfn.JsonPath.DISCARD,

@@ -19,6 +19,16 @@ Both Bedrock and Step Functions are serverless, so you don't have to manage any 
 
 <!-- toc -->
 
+1. [Prompt chaining techniques](#prompt-chaining-techniques)
+    1. [Model invocation](#model-invocation)
+    1. [Prompt templating](#prompt-templating)
+    1. [Sequential chains](#sequential-chains)
+    1. [Parallel chains](#parallel-chains)
+    1. [Conditions](#conditions)
+    1. [Maps](#maps)
+    1. [Chain prompts and other AWS services](#chain-prompts-and-other-aws-services)
+    1. [Validate output and re-prompt](#validate-output-and-re-prompt)
+    1. [Wait for human input](#wait-for-human-input)
 1. [Prompt chaining examples](#prompt-chaining-examples)
     1. [Write a blog post](#write-a-blog-post)
     1. [Write a story](#write-a-story)
@@ -30,6 +40,347 @@ Both Bedrock and Step Functions are serverless, so you don't have to manage any 
 1. [Security](#security)
 1. [License](#license)
 <!-- tocstop -->
+
+## Prompt chaining techniques
+
+This repository illustrate many prompt chaining techniques that can be orchestrated by Step Functions.
+The chaining techniques are described below with AWS CDK sample code snippets.
+The full code can be found in the [techniques directory](techniques/).
+
+### Model invocation
+
+Step Functions can invoke models in Bedrock using the
+[optimized integration for Bedrock](https://docs.aws.amazon.com/step-functions/latest/dg/connect-bedrock.html).
+The `body` parameter will depend on which model is selected.
+
+```python
+from aws_cdk import (
+    aws_bedrock as bedrock,
+    aws_stepfunctions as sfn,
+    aws_stepfunctions_tasks as tasks,
+)
+
+# Use the Step Functions integration for Bedrock
+tasks.BedrockInvokeModel(
+    self,
+    "Generate Book Summary",
+    # Choose the model to invoke
+    model=bedrock.FoundationModel.from_foundation_model_id(
+        self,
+        "Model",
+        bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_INSTANT_V1,
+    ),
+    # Provide the input to the model, including the prompt and inference properties
+    body=sfn.TaskInput.from_object(
+        {
+            "anthropic_version": "bedrock-2023-05-31",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            # The prompt
+                            "text": "Write a 1-2 sentence summary for the book Pride & Prejudice.",
+                        }
+                    ],
+                }
+            ],
+            "max_tokens": 250,
+            "temperature": 1,
+        }
+    ),
+    # Extract the response from the model
+    output_path="$.Body.content[0].text",
+)
+```
+
+<table>
+<tr>
+<td> Sample state machine </td> <td> Sample output </td>
+</tr>
+<tr>
+<td width="250px"><img src="docs/screenshots/model_invocation.png" alt="Screenshot" /></td>
+<td>
+Here is a one sentence summary of Pride & Prejudice by Jane Austen:
+
+The story follows the romantic lives and relationships between the Bennet family
+daughters and the eligible gentlemen of the neighborhood, most significantly the
+love story between Elizabeth Bennet and Mr. Darcy that develops despite their
+initial prejudices against each other.
+</td>
+</tr>
+</table>
+
+### Prompt templating
+
+With Step Functions [intrinsic functions](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-intrinsic-functions.html),
+prompts be templated. Values such as the execution input or outputs from previous steps
+can be injected into the prompt.
+
+```python
+from aws_cdk import aws_stepfunctions as sfn
+
+# This prompt is templated with the novel name as a variable
+# from the Step Functions execution input.
+# The input to the Step Functions execution could be:
+# "Pride and Prejudice"
+"text": sfn.JsonPath.format(
+    "Write a 1-2 sentence summary for the book {}.",
+    sfn.JsonPath.string_at("$$.Execution.Input"),
+),
+```
+
+<table>
+<tr>
+<td> Sample state machine </td> <td> Sample input </td> <td> Sample output </td>
+</tr>
+<tr>
+<td width="250px"><img src="docs/screenshots/prompt_templating.png" alt="Screenshot" /></td>
+<td>"Pride and Prejudice"</td>
+<td>
+Here is a one sentence summary of Pride and Prejudice by Jane Austen:
+
+Pride and Prejudice follows the romantic scrapes of Elizabeth Bennet
+and Fitzwilliam Darcy as they engage in a battle of wit and
+misunderstandings before ultimately falling in love.
+</td>
+</tr>
+</table>
+
+### Sequential chains
+
+In a sequential chain, the model response from the first prompt in the chain
+can be passed as part of the second step's prompt in the chain.
+
+For example, the first prompt might generate a book's summary:
+```python
+"messages": [
+    {
+        "role": "user",
+        "content": [
+            {
+                "type": "text",
+                # The first prompt
+                "text": "Write a 1-2 sentence summary for the book Pride & Prejudice.",
+            }
+        ],
+    }
+],
+```
+
+The first prompt can be chained to a second prompt in the Step Functions state machine definition:
+```python
+chain = generate_book_summary.next(generate_book_advertisement)
+```
+
+Then, the second prompt might use that generated book's summary
+as context for a second task. Step Functions intrinsic functions
+are used to inject the previous step's output into this step.
+```python
+"messages": [
+    {
+        "role": "user",
+        "content": [
+            {
+                "type": "text",
+                # The previous step's prompt.
+                "text": "Write a 1-2 sentence summary for the book Pride & Prejudice.",
+            },
+        ],
+    },
+    {
+        # The previous step's model output
+        "role": sfn.JsonPath.string_at("$.Body.role"),
+        "content": sfn.JsonPath.string_at("$.Body.content"),
+    },
+    {
+        "role": "user",
+        "content": [
+            {
+                "type": "text",
+                # The new prompt
+                "text": "Now write a short advertisement for the novel.",
+            },
+        ],
+    },
+],
+```
+
+<table>
+<tr>
+<td> Sample state machine </td> <td> Sample output </td>
+</tr>
+<tr>
+<td width="250px"><img src="docs/screenshots/sequential_chain.png" alt="Screenshot" /></td>
+<td>
+Are you looking for a classic love story with wit and social commentary? then Pride & Prejudice by Jane Austen is the novel for you. Follow Elizabeth Bennet and the landed gentlemen Mr. Darcy as they spar with their words but find their prejudices falling away to reveal a deeper affection. Austen offers a window into 19th century English society while crafting a tale as charming and compelling today as when it was first published. With her sharp insights and irresistible characters, Pride & Prejudice continues to enthrall readers after over 200 years. See beyond hasty judgments to see the truth of what really lies in the heart in this beloved work of romance and social satire.
+</td>
+</tr>
+</table>
+
+### Parallel chains
+
+Some steps in chains can be executed in parallel, with the results merged together in a later step.
+For example, two prompts can run in parallel, and both model responses can be used as
+context in a later prompt in the chain.
+
+In the Step Functions state machine definition, parallel tasks can be set as
+branches of a [Parallel state](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-parallel-state.html)
+in the state machine.
+In this example, the `generate_book_advertisement` task will receive as input a JSON object
+containing the model response from the `generate_book_summary` task as the `summary` value
+and the model response from the `generate_book_target_audience` task as the `audience` value.
+```python
+from aws_cdk import aws_stepfunctions as sfn
+
+chain = (
+    sfn.Parallel(
+        self,
+        "Parallel Tasks",
+        result_selector={
+            "summary.$": "$[0]",
+            "audience.$": "$[1]",
+        },
+    )
+    .branch(generate_book_summary)
+    .branch(generate_book_target_audience)
+).next(generate_book_advertisement)
+```
+
+<table>
+<tr>
+<td> Sample state machine </td> <td> Sample output </td>
+</tr>
+<tr>
+<td width="500px"><img src="docs/screenshots/parallel_chain.png" alt="Screenshot" /></td>
+<td>
+Are you a gentlewoman seeking love and excitement amid the ballrooms and country estates of Regency England?
+
+Introducing the new novel Pride & Prejudice by Jane Austen! This captivating tale follows the lively Elizabeth Bennet and her sisters as they navigate the perils and pleasures of the marriage market.
+
+Full of wit and social insight, Austen draws you into the world of manners and misconceptions that governs genteel society. Watch as strong-willed Lizzie clashes, then learns to see past first impressions of the handsome but haughty Mr. Darcy.
+
+With marriage plots that entangle and hearts that misunderstand, Pride & Prejudice is a page-turning delight. It offers charming insights into love and class that women of fashion will find most diverting and relatable.
+
+Join the Bennet sisters in their romantic adventures through balls, assemblies and country walks. With humor, feeling and social insight, Pride & Prejudice is this season's must-read for ladies seeking laughter, learning and happily-ever-after.
+</td>
+</tr>
+</table>
+
+### Conditions
+
+Model responses can influence the logic of a Step Functions state machine
+by using a [Choice state](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html).
+The model response can be compared to some other value, such as string equality or number comparisons,
+in order to determine which state to transition to next.
+
+In this example, the model is asked to determine whether the execution input is indeed a book,
+before generating a summary for it. The prompt instructs the model to answer "yes" or "no".
+If model's response is "yes", the state machine will transition to the prompt that generates
+the book summary. If the model's response is "no", the state machine will transition to a
+failure state.
+
+```python
+from aws_cdk import aws_stepfunctions as sfn
+
+# Decide which state to transition to next, based on the model's response
+is_book_decision = (
+    sfn.Choice(self, "Is it a book?")
+    .when(
+        sfn.Condition.string_equals("$.Body.content[0].text", "yes"),
+    )
+    .otherwise(sfn.Fail(self, "Input was not a book"))
+)
+
+# Prompt the model to determine whether the input is a book first
+chain = generate_is_book_response.next(is_book_decision)
+```
+
+<table>
+<tr>
+<td> Sample state machine </td> <td> Sample input </td> <td> Sample output </td>
+</tr>
+<tr>
+<td width="450px"><img src="docs/screenshots/condition_chain.png" alt="Screenshot" /></td>
+<td>"Pride and Prejudice"</td>
+<td>
+Here is a short 4 line advertisement for Pride & Prejudice:
+
+Jane Austen's beloved classic tale of romance and wit.
+
+Follow Elizabeth Bennet as her prejudice against the wealthy Mr. Darcy leads to humorous misunderstandings. Will pride and class division keep them apart or will their feelings overcome society's expectations?
+
+Immerse yourself in Regency-era England through Austen's timeless characters and sharp social commentary in this beloved story of love triumphing over judgment.
+</td>
+</tr>
+</table>
+
+### Maps
+
+TODO
+
+### Chain prompts and other AWS services
+
+Step Functions supports calling over 220 AWS services from a state machine, which can be
+chained with prompts to a model in Bedrock. Additional context for a prompt can be retrieved
+from S3 or DynamoDB. Or, a model's response can be sent on to other AWS services like SNS
+or SQS, or it can be processed with custom code in a Lambda function.
+
+In this example, the model's response is sent as a message to an SNS topic.
+```python
+from aws_cdk import (
+    aws_sns as sns,
+    aws_stepfunctions as sfn,
+    aws_stepfunctions_tasks as tasks,
+)
+
+topic = sns.Topic(
+    self, "Topic", display_name="Notifications about generated book summaries"
+)
+notify_me = tasks.SnsPublish(
+    self,
+    "Notify Me",
+    topic=topic,
+    message=sfn.TaskInput.from_object(
+        {
+            # Retrieve the model's response from the previous task
+            "summary": sfn.TaskInput.from_json_path_at(
+                "$.Body.content[0].text"
+            ),
+            # Retrieve the book name from the execution input
+            "book": sfn.TaskInput.from_json_path_at("$$.Execution.Input"),
+        }
+    ),
+    result_path=sfn.JsonPath.DISCARD,
+)
+
+# Generate the book summary, then send the notification
+chain = generate_book_summary.next(notify_me)
+```
+
+<table>
+<tr>
+<td> Sample state machine </td> <td> Sample input </td> <td> Sample SNS topic message </td>
+</tr>
+<tr>
+<td width="250px"><img src="docs/screenshots/aws_service_invocation.png" alt="Screenshot" /></td>
+<td>"Pride and Prejudice"</td>
+<td>
+"summary": "Here is a one sentence summary of Pride and Prejudice by Jane Austen:\nIt follows the romance between Elizabeth Bennet, the clever second daughter of a gentleman farmer, and Fitzwilliam Darcy, a wealthy aristocrat, as prejudices arising from their social differences are overcome through their developing affection and respect for each other."
+</br> </br>
+"book": "Pride and Prejudice"
+</td>
+</tr>
+</table>
+
+### Validate output and re-prompt
+
+TODO
+
+### Wait for human input
+
+TODO
 
 ## Prompt chaining examples
 

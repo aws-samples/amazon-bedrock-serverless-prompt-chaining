@@ -58,14 +58,12 @@ class HumanInputChain(Stack):
         )
         publish_ad_for_approval = tasks.SnsPublish(
             self,
-            "Get Approval For Advertisment",
+            "Get Approval For Advertisement",
             topic=topic,
             integration_pattern=sfn.IntegrationPattern.WAIT_FOR_TASK_TOKEN,
             message=sfn.TaskInput.from_object(
                 {
-                    "advertisment": sfn.TaskInput.from_json_path_at(
-                        "$.Body.content[0].text"
-                    ),
+                    "advertisement": sfn.JsonPath.string_at("$.Body.content[0].text"),
                     "task_token": sfn.JsonPath.task_token,
                 }
             ),

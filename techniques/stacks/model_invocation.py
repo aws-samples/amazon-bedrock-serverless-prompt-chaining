@@ -40,7 +40,7 @@ class ModelInvocation(Stack):
                     "temperature": 1,
                 }
             ),
-            # Extract the final response from the model as the result of the Step Functions execution
+            # Extract the response from the model as the result of the Step Functions execution
             output_path="$.Body.content[0].text",
         )
 

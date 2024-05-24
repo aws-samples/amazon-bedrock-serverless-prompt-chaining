@@ -187,7 +187,7 @@ class PipelineStack(Stack):
                         },
                         "build": {
                             "commands": [
-                                "cd techniques/"
+                                "cd techniques/",
                                 "cdk deploy --app 'python3 technique_stacks.py' --all --require-approval=never",
                             ]
                         },
