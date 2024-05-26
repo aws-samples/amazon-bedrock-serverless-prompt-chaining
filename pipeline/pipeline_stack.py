@@ -317,6 +317,6 @@ class PipelineStack(Stack):
             project=test_techniques,
             input=source_output,
             type=actions.CodeBuildActionType.TEST,
-            run_order=2,
+            run_order=3,
         )
         deploy_stage.add_action(test_techniques_action)
