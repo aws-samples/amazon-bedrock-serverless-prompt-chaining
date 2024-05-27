@@ -4,11 +4,11 @@ from botocore.config import Config
 from bs4 import BeautifulSoup
 from github import Github, UnknownObjectException
 
-from langchain.agents import initialize_agent
-from langchain.agents import AgentType
-from langchain.llms import Bedrock
-from langchain.tools import Tool
-from langchain.utilities.requests import TextRequestsWrapper
+from langchain.agents.initialize import initialize_agent
+from langchain.agents.agent_types import AgentType
+from langchain_community.llms.bedrock import Bedrock
+from langchain_community.utilities.requests import TextRequestsWrapper
+from langchain_core.tools import Tool
 
 bedrock_client = boto3.client(
     "bedrock-runtime", config=Config(retries={"max_attempts": 6, "mode": "standard"})
