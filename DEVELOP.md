@@ -26,6 +26,18 @@ Edit the file `cdk_stacks.py`. Search for `parent_domain` and fill in your own D
 The demo application will be hosted at `https://bedrock-serverless-prompt-chaining.my-domain.com`.
 Push this change to your fork repository.
 
+Create a [new GitHub personal access token](https://github.com/settings/tokens/new).
+The token only needs the `public_repo` scope.
+Copy the generated token, and create a Secrets Manager secret containing the token:
+```
+aws secretsmanager create-secret \
+    --region us-west-2 \
+    --name BedrockPromptChainGitHubToken \
+    --description "For access to public repos for the Bedrock serverless prompt chain demos" \
+    --secret-string "{\"token\": \"<your token>\"}"
+```
+
+
 Set up a Weasyprint Lambda layer in your account. One of the examples in the demo application uses this library to generate PDF files.
 ```
 git clone https://github.com/kotify/cloud-print-utils.git

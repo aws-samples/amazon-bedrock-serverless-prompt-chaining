@@ -3,6 +3,7 @@ from aws_cdk import (
     Stack,
     aws_lambda as lambda_,
     aws_lambda_python_alpha as lambda_python,
+    aws_secretsmanager as secrets,
     aws_stepfunctions as sfn,
     aws_stepfunctions_tasks as tasks,
 )
@@ -16,6 +17,9 @@ class MostPopularRepoLangchainStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         # Agent #1: look up the highest trending repo on GitHub
+        github_secret = secrets.Secret.from_secret_name_v2(
+            scope=self, id="GitHubToken", secret_name="BedrockPromptChainGitHubToken"
+        )
         lookup_repo_lambda = lambda_python.PythonFunction(
             self,
             "LookupRepoAgent",
@@ -25,8 +29,10 @@ class MostPopularRepoLangchainStack(Stack):
             bundling=get_lambda_bundling_options(),
             timeout=Duration.minutes(2),
             memory_size=512,
+            environment={"GITHUB_TOKEN_SECRET": github_secret.secret_name},
         )
         lookup_repo_lambda.add_to_role_policy(get_bedrock_iam_policy_statement())
+        github_secret.grant_read(lookup_repo_lambda)
 
         lookup_repo_job = tasks.LambdaInvoke(
             self,
@@ -45,8 +51,10 @@ class MostPopularRepoLangchainStack(Stack):
             bundling=get_lambda_bundling_options(),
             timeout=Duration.minutes(2),
             memory_size=512,
+            environment={"GITHUB_TOKEN_SECRET": github_secret.secret_name},
         )
         summarize_repo_lambda.add_to_role_policy(get_bedrock_iam_policy_statement())
+        github_secret.grant_read(summarize_repo_lambda)
 
         summarize_repo_job = tasks.LambdaInvoke(
             self,

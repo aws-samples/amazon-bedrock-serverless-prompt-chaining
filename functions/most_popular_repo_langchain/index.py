@@ -1,8 +1,10 @@
 import re
 import boto3
 from botocore.config import Config
+import os
 from bs4 import BeautifulSoup
-from github import Github, UnknownObjectException
+from github import Auth, Github, UnknownObjectException
+import json
 
 from langchain.agents.initialize import initialize_agent
 from langchain.agents.agent_types import AgentType
@@ -13,6 +15,8 @@ from langchain_core.tools import Tool
 bedrock_client = boto3.client(
     "bedrock-runtime", config=Config(retries={"max_attempts": 6, "mode": "standard"})
 )
+secrets_client = boto3.client("secretsmanager")
+github_token_secret_name = os.environ.get("GITHUB_TOKEN_SECRET")
 
 
 ### Tools ###
@@ -37,10 +41,18 @@ def get_github_trending_page(input):
 
 
 def get_github_repo_readme(input):
+    github_token_secret_value = secrets_client.get_secret_value(
+        SecretId=github_token_secret_name
+    )
+    github_token = json.loads(github_token_secret_value["SecretString"])["token"]
+    github_client = Github(auth=Auth.Token(github_token))
+
     repo_name = input.replace("https://github.com/", "")
     try:
         readme_content = (
-            Github().get_repo(repo_name).get_readme().decoded_content.decode("utf-8")
+            github_client.get_repo(repo_name)
+            .get_readme()
+            .decoded_content.decode("utf-8")
         )
         if len(readme_content) > 10000:
             response = f"Here are the first 10,000 characters of the README for {input}, inside <readme></readme> XML tags."

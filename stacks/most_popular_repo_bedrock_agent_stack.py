@@ -7,6 +7,7 @@ from aws_cdk import (
     aws_lambda as lambda_,
     aws_lambda_python_alpha as lambda_python,
     aws_s3_assets as assets,
+    aws_secretsmanager as secrets,
     aws_stepfunctions as sfn,
     aws_stepfunctions_tasks as tasks,
 )
@@ -42,6 +43,9 @@ class MostPopularRepoBedrockAgentStack(Stack):
             )
         )
 
+        github_secret = secrets.Secret.from_secret_name_v2(
+            scope=self, id="GitHubToken", secret_name="BedrockPromptChainGitHubToken"
+        )
         github_agent_actions_lambda = lambda_python.PythonFunction(
             self,
             "GitHubAgentActions",
@@ -50,7 +54,10 @@ class MostPopularRepoBedrockAgentStack(Stack):
             entry="functions/most_popular_repo_bedrock_agent/github_agent_actions",
             timeout=Duration.seconds(20),
             memory_size=512,
+            environment={"GITHUB_TOKEN_SECRET": github_secret.secret_name},
         )
+        github_secret.grant_read(github_agent_actions_lambda)
+
         bedrock_principal = iam.ServicePrincipal(
             "bedrock.amazonaws.com",
             conditions={
