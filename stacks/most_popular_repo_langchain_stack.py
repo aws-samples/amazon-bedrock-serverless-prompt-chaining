@@ -23,7 +23,7 @@ class MostPopularRepoLangchainStack(Stack):
             entry="functions/most_popular_repo_langchain",
             handler="lookup_trending_repo_agent",
             bundling=get_lambda_bundling_options(),
-            timeout=Duration.seconds(60),
+            timeout=Duration.minutes(2),
             memory_size=512,
         )
         lookup_repo_lambda.add_to_role_policy(get_bedrock_iam_policy_statement())
@@ -43,7 +43,7 @@ class MostPopularRepoLangchainStack(Stack):
             entry="functions/most_popular_repo_langchain",
             handler="summarize_repo_readme_agent",
             bundling=get_lambda_bundling_options(),
-            timeout=Duration.seconds(60),
+            timeout=Duration.minutes(2),
             memory_size=512,
         )
         summarize_repo_lambda.add_to_role_policy(get_bedrock_iam_policy_statement())
@@ -63,5 +63,5 @@ class MostPopularRepoLangchainStack(Stack):
             "MostPopularRepoWorkflow",
             state_machine_name="PromptChainDemo-MostPopularRepoLangchain",
             definition_body=sfn.DefinitionBody.from_chainable(chain),
-            timeout=Duration.seconds(300),
+            timeout=Duration.minutes(5),
         )

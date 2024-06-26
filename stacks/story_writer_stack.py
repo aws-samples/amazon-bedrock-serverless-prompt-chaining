@@ -144,5 +144,5 @@ Do not include any other content outside of the JSON object.
             "StoryWriterWorkflow",
             state_machine_name="PromptChainDemo-StoryWriter",
             definition_body=sfn.DefinitionBody.from_chainable(chain),
-            timeout=Duration.seconds(300),
+            timeout=Duration.minutes(5),
         )

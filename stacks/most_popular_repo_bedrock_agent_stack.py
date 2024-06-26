@@ -48,7 +48,7 @@ class MostPopularRepoBedrockAgentStack(Stack):
             function_name="PromptChainDemo-MostPopularRepoBedrockAgents-GitHubActions",
             runtime=lambda_.Runtime.PYTHON_3_9,
             entry="functions/most_popular_repo_bedrock_agent/github_agent_actions",
-            timeout=Duration.seconds(60),
+            timeout=Duration.seconds(20),
             memory_size=512,
         )
         bedrock_principal = iam.ServicePrincipal(
@@ -145,7 +145,7 @@ class MostPopularRepoBedrockAgentStack(Stack):
             bundling=lambda_python.BundlingOptions(
                 asset_excludes=[".venv", ".mypy_cache", "__pycache__"],
             ),
-            timeout=Duration.seconds(60),
+            timeout=Duration.minutes(2),
             memory_size=512,
             environment={
                 "BEDROCK_AGENT_ID": bedrock_agent.attr_agent_id,
@@ -171,7 +171,7 @@ class MostPopularRepoBedrockAgentStack(Stack):
             bundling=lambda_python.BundlingOptions(
                 asset_excludes=[".venv", ".mypy_cache", "__pycache__"],
             ),
-            timeout=Duration.seconds(60),
+            timeout=Duration.minutes(2),
             memory_size=512,
             environment={
                 "BEDROCK_AGENT_ID": bedrock_agent.attr_agent_id,
@@ -195,5 +195,5 @@ class MostPopularRepoBedrockAgentStack(Stack):
             "MostPopularRepoWorkflow",
             state_machine_name="PromptChainDemo-MostPopularRepoBedrockAgents",
             definition_body=sfn.DefinitionBody.from_chainable(chain),
-            timeout=Duration.seconds(300),
+            timeout=Duration.minutes(5),
         )

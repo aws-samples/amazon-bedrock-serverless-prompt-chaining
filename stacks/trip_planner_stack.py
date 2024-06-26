@@ -191,5 +191,5 @@ The itinerary should be formatted in Markdown format.""",
             "TripPlannerWorkflow",
             state_machine_name="PromptChainDemo-TripPlanner",
             definition_body=sfn.DefinitionBody.from_chainable(chain),
-            timeout=Duration.seconds(300),
+            timeout=Duration.minutes(5),
         )

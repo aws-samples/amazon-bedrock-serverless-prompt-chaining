@@ -89,5 +89,5 @@ class BlogPostStack(Stack):
             "BlogPostWorkflow",
             state_machine_name="PromptChainDemo-BlogPost",
             definition_body=sfn.DefinitionBody.from_chainable(chain),
-            timeout=Duration.seconds(300),
+            timeout=Duration.minutes(5),
         )

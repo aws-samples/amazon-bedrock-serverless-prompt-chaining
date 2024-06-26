@@ -338,7 +338,7 @@ Do not include any other content outside of the JSON object.
             runtime=lambda_.Runtime.PYTHON_3_9,
             entry="functions/meal_planner/meal_choose_winner_agent",
             bundling=get_lambda_bundling_options(),
-            timeout=Duration.seconds(60),
+            timeout=Duration.minutes(1),
             memory_size=256,
         )
 
@@ -423,5 +423,5 @@ Create a recipe for this meal, based on your previous meal suggestion and the in
             "MealPlannerWorkflow",
             state_machine_name="PromptChainDemo-MealPlanner",
             definition_body=sfn.DefinitionBody.from_chainable(chain),
-            timeout=Duration.seconds(300),
+            timeout=Duration.minutes(5),
         )

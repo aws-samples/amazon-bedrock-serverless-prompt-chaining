@@ -255,5 +255,5 @@ Now create a one-page movie pitch, based on your previous short description for 
             state_machine_name="PromptChainDemo-MoviePitch",
             definition_body=sfn.DefinitionBody.from_chainable(chain),
             # 1 hour to account for getting user feedback in the UI
-            timeout=Duration.seconds(3600),
+            timeout=Duration.hours(1),
         )
