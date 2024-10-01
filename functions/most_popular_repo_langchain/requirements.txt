@@ -2,5 +2,5 @@ langchain==0.2.15
 langchain-community==0.2.15
 requests==2.32.3
 PyGithub==2.4.0
-boto3==1.35.10
+boto3==1.35.30
 beautifulsoup4
