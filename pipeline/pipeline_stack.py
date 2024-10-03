@@ -127,10 +127,113 @@ class PipelineStack(Stack):
         )
         pipeline.add_stage(stage_name="SyncPipeline", actions=[pipeline_build_action])
 
-        # Deploy
+        # Deploy examples
+        deploy_examples_project = codebuild.PipelineProject(
+            self,
+            "DeployExamples",
+            build_spec=codebuild.BuildSpec.from_object_to_yaml(
+                {
+                    "version": "0.2",
+                    "phases": {
+                        "install": {
+                            "runtime-versions": {
+                                "python": "3.x",
+                                "nodejs": "latest",
+                            },
+                            "commands": [
+                                "npm install -g aws-cdk",
+                                "python3 -m venv .venv",
+                                "source .venv/bin/activate",
+                                "pip install -r requirements.txt",
+                            ],
+                        },
+                        "build": {
+                            "commands": [
+                                "cd techniques/",
+                                "cdk deploy --app 'python3 technique_stacks.py' --all --require-approval=never",
+                            ]
+                        },
+                    },
+                }
+            ),
+            environment=codebuild.BuildEnvironment(
+                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5
+            ),
+        )
+        deploy_examples_project.add_to_role_policy(
+            iam.PolicyStatement(actions=["*"], resources=["*"])
+        )
+        deploy_examples_action = actions.CodeBuildAction(
+            action_name="Deploy",
+            project=deploy_examples_project,
+            input=source_output,
+        )
+
+        deploy_examples_stage = pipeline.add_stage(
+            stage_name="DeployExamples", actions=[deploy_examples_action]
+        )
+
+        test_examples = codebuild.PipelineProject(
+            self,
+            "TestExamples",
+            build_spec=codebuild.BuildSpec.from_object_to_yaml(
+                {
+                    "version": "0.2",
+                    "phases": {
+                        "build": {
+                            "commands": [
+                                "cd techniques/",
+                                "./run-test-execution.sh ModelInvocation",
+                                "sleep 15",
+                                "./run-test-execution.sh PromptTemplating",
+                                "sleep 15",
+                                "./run-test-execution.sh SequentialChain",
+                                "sleep 15",
+                                "./run-test-execution.sh ParallelChain",
+                                "sleep 15",
+                                "./run-test-execution.sh ConditionalChain",
+                                # Don't test HumanInput in the pipeline because it relies on human input
+                                # "sleep 15",
+                                # "./run-test-execution.sh HumanInput",
+                                "sleep 15",
+                                "./run-test-execution.sh Map",
+                                "sleep 15",
+                                "./run-test-execution.sh AwsServiceInvocation",
+                                "sleep 15",
+                                "./run-test-execution.sh Validation",
+                            ]
+                        },
+                    },
+                }
+            ),
+            environment=codebuild.BuildEnvironment(
+                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5
+            ),
+        )
+
+        test_examples.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "states:StartExecution",
+                    "states:DescribeExecution",
+                ],
+                resources=["*"],
+            )
+        )
+
+        test_examples_action = actions.CodeBuildAction(
+            action_name="Test",
+            project=test_examples,
+            input=source_output,
+            type=actions.CodeBuildActionType.TEST,
+            run_order=2,
+        )
+        deploy_examples_stage.add_action(test_examples_action)
+
+        # Deploy demo app
         deploy_project = codebuild.PipelineProject(
             self,
-            "DeployProject",
+            "DeployDemoApp",
             build_spec=codebuild.BuildSpec.from_object_to_yaml(
                 {
                     "version": "0.2",
@@ -166,55 +269,14 @@ class PipelineStack(Stack):
             action_name="Deploy", project=deploy_project, input=source_output
         )
 
-        deploy_techniques_project = codebuild.PipelineProject(
-            self,
-            "DeployTechniqueExamples",
-            build_spec=codebuild.BuildSpec.from_object_to_yaml(
-                {
-                    "version": "0.2",
-                    "phases": {
-                        "install": {
-                            "runtime-versions": {
-                                "python": "3.x",
-                                "nodejs": "latest",
-                            },
-                            "commands": [
-                                "npm install -g aws-cdk",
-                                "python3 -m venv .venv",
-                                "source .venv/bin/activate",
-                                "pip install -r requirements.txt",
-                            ],
-                        },
-                        "build": {
-                            "commands": [
-                                "cd techniques/",
-                                "cdk deploy --app 'python3 technique_stacks.py' --all --require-approval=never",
-                            ]
-                        },
-                    },
-                }
-            ),
-            environment=codebuild.BuildEnvironment(
-                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5
-            ),
-        )
-        deploy_techniques_project.add_to_role_policy(
-            iam.PolicyStatement(actions=["*"], resources=["*"])
-        )
-        deploy_techniques_action = actions.CodeBuildAction(
-            action_name="DeployTechniquesExamples",
-            project=deploy_techniques_project,
-            input=source_output,
-        )
-
         deploy_stage = pipeline.add_stage(
-            stage_name="Deploy", actions=[deploy_action, deploy_techniques_action]
+            stage_name="DeployDemoApp", actions=[deploy_action]
         )
 
         # Test each demo
         test_project = codebuild.PipelineProject(
             self,
-            "TestDemos",
+            "TestDemoApp",
             build_spec=codebuild.BuildSpec.from_object_to_yaml(
                 {
                     "version": "0.2",
@@ -263,60 +325,3 @@ class PipelineStack(Stack):
             run_order=2,
         )
         deploy_stage.add_action(test_action)
-
-        test_techniques = codebuild.PipelineProject(
-            self,
-            "TestTechniqueExamples",
-            build_spec=codebuild.BuildSpec.from_object_to_yaml(
-                {
-                    "version": "0.2",
-                    "phases": {
-                        "build": {
-                            "commands": [
-                                "cd techniques/",
-                                "./run-test-execution.sh ModelInvocation",
-                                "sleep 15",
-                                "./run-test-execution.sh PromptTemplating",
-                                "sleep 15",
-                                "./run-test-execution.sh SequentialChain",
-                                "sleep 15",
-                                "./run-test-execution.sh ParallelChain",
-                                "sleep 15",
-                                "./run-test-execution.sh ConditionalChain",
-                                # Don't test HumanInput in the pipeline because it relies on human input
-                                # "sleep 15",
-                                # "./run-test-execution.sh HumanInput",
-                                "sleep 15",
-                                "./run-test-execution.sh Map",
-                                "sleep 15",
-                                "./run-test-execution.sh AwsServiceInvocation",
-                                "sleep 15",
-                                "./run-test-execution.sh Validation",
-                            ]
-                        },
-                    },
-                }
-            ),
-            environment=codebuild.BuildEnvironment(
-                build_image=codebuild.LinuxBuildImage.AMAZON_LINUX_2_5
-            ),
-        )
-
-        test_techniques.add_to_role_policy(
-            iam.PolicyStatement(
-                actions=[
-                    "states:StartExecution",
-                    "states:DescribeExecution",
-                ],
-                resources=["*"],
-            )
-        )
-
-        test_techniques_action = actions.CodeBuildAction(
-            action_name="TestTechniqueExamples",
-            project=test_techniques,
-            input=source_output,
-            type=actions.CodeBuildActionType.TEST,
-            run_order=3,
-        )
-        deploy_stage.add_action(test_techniques_action)
