@@ -1,8 +1,17 @@
 queue_rules:
   - name: default
-    conditions:
+    queue_conditions:
+      - base=main
+      - author=dependabot[bot]
+      - label=dependencies
+      - -title~=(WIP|wip)
+      - -label~=(blocked|do-not-merge)
+      - -merged
+      - -closed
+    merge_conditions:
       - status-success=Pipeline Stack
       - status-success=Application Stacks
+    merge_method: squash
 
 pull_request_rules:
   - name: Automatically merge Dependabot PRs
@@ -18,5 +27,3 @@ pull_request_rules:
       review:
         type: APPROVE
       queue:
-        name: default
-        method: squash
