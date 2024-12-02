@@ -54,10 +54,10 @@ def get_github_repo_readme(input):
             .get_readme()
             .decoded_content.decode("utf-8")
         )
-        if len(readme_content) > 10000:
-            response = f"Here are the first 10,000 characters of the README for {input}, inside <readme></readme> XML tags."
+        if len(readme_content) > 5000:
+            response = f"Here are the first 5,000 characters of the README for {input}, inside <readme></readme> XML tags."
             response += "\n<readme>"
-            response += "\n" + readme_content[:10000]
+            response += "\n" + readme_content[:5000]
         else:
             response = (
                 f"Here is the README for {input}, inside <readme></readme> XML tags."

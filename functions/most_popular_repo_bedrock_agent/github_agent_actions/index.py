@@ -50,11 +50,9 @@ def get_github_repository_readme_agent_action(input):
             .get_readme()
             .decoded_content.decode("utf-8")
         )
-        if len(readme_content) > 10000:
-            response = (
-                f"Here are the first 10,000 characters of the README for {input}."
-            )
-            response += "\n" + readme_content[:10000]
+        if len(readme_content) > 5000:
+            response = f"Here are the first 5,000 characters of the README for {input}."
+            response += "\n" + readme_content[:5000]
         else:
             response = f"Here are the full contents of the README for {input}."
             response += "\n" + readme_content
