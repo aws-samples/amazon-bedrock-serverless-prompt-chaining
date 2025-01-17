@@ -5,8 +5,8 @@ from aws_cdk import (
 from stacks.model_invocation import ModelInvocation
 from stacks.prompt_templating import PromptTemplating
 from stacks.sequential_chain import SequentialChain
+from stacks.parallel_chain import ParallelChain
 
-# from stacks.parallel_chain import ParallelChain
 # from stacks.conditional_chain import ConditionalChain
 # from stacks.human_input_chain import HumanInputChain
 # from stacks.map_chain import MapChain
@@ -32,11 +32,11 @@ SequentialChain(
     "Techniques-Flows-SequentialChain",
     env=env,
 )
-# ParallelChain(
-#     app,
-#     "Techniques-Flows-ParallelChain",
-#     env=env,
-# )
+ParallelChain(
+    app,
+    "Techniques-Flows-ParallelChain",
+    env=env,
+)
 # ConditionalChain(
 #     app,
 #     "Techniques-Flows-ConditionalChain",
