@@ -1,6 +1,6 @@
-## Development guide
+# Development guide
 
-### Setup
+## Setup
 
 Install both nodejs and python on your computer.
 
@@ -19,7 +19,67 @@ find . -name requirements.txt | xargs -I{} pip install -r {}
 ```
 After this initial setup, you only need to run `source .venv/bin/activate` to use the virtual env for further development.
 
-### Deploy the demo application
+## Deploy the technique examples (AWS Step Functions)
+
+Deploy all the stacks:
+```
+cd techniques
+
+cdk deploy --app 'python3 technique_stacks.py' --all
+```
+
+Run an example input through each flow example. Edit the files in the `test-inputs` directory to change the test execution inputs.
+```
+python3 run-test-execution.sh ModelInvocation
+
+python3 run-test-execution.sh PromptTemplating
+
+python3 run-test-execution.sh SequentialChain
+
+python3 run-test-execution.sh ParallelChain
+
+python3 run-test-execution.sh ConditionalChain
+
+python3 run-test-execution.sh HumanInput
+
+python3 run-test-execution.sh Map
+
+python3 run-test-execution.sh AwsServiceInvocation
+
+python3 run-test-execution.sh Validation
+```
+
+## Deploy the technique examples (Amazon Bedrock Flows)
+
+Deploy all the stacks:
+```
+cd techniques-bedrock-flows
+
+cdk deploy --app 'python3 technique_stacks.py' --all
+```
+
+Run an example input through each flow example. Edit the files in the `test-inputs` directory to change the test execution inputs.
+```
+python3 run-test-execution.sh ModelInvocation
+
+python3 run-test-execution.sh PromptTemplating
+
+python3 run-test-execution.sh SequentialChain
+
+python3 run-test-execution.sh ParallelChain
+
+python3 run-test-execution.sh ConditionalChain
+
+python3 run-test-execution.sh HumanInput
+
+python3 run-test-execution.sh Map
+
+python3 run-test-execution.sh AwsServiceInvocation
+
+python3 run-test-execution.sh Validation
+```
+
+## Deploy the demo application
 
 Fork this repo to your own GitHub account.
 Edit the file `cdk_stacks.py`. Search for `parent_domain` and fill in your own DNS domain, such as `my-domain.com`.
@@ -131,17 +191,17 @@ cdk watch --app 'python3 cdk_stacks.py' \
 Then in a separate terminal, run test executions in the cloud after making changes to your code.
 Edit the files in the `test-inputs` directory to change the test execution inputs.
 ```
-./run-test-execution.sh BlogPost
+python3 run-test-execution.sh BlogPost
 
-./run-test-execution.sh TripPlanner
+python3 run-test-execution.sh TripPlanner
 
-./run-test-execution.sh StoryWriter
+python3 run-test-execution.sh StoryWriter
 
-./run-test-execution.sh MoviePitch
+python3 run-test-execution.sh MoviePitch
 
-./run-test-execution.sh MealPlanner
+python3 run-test-execution.sh MealPlanner
 
-./run-test-execution.sh MostPopularRepoBedrockAgents
+python3 run-test-execution.sh MostPopularRepoBedrockAgents
 
-./run-test-execution.sh MostPopularRepoLangchain
+python3 run-test-execution.sh MostPopularRepoLangchain
 ```

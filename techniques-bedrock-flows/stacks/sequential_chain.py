@@ -17,6 +17,13 @@ class SequentialChain(Stack):
         )
 
         # Define the prompts
+        get_summary_prompt_content = (
+            "Write a 1-2 sentence summary for the book Pride & Prejudice."
+        )
+        write_an_advertisement_prompt_content = (
+            "Now write a short advertisement for the novel."
+        )
+
         get_summary_prompt = bedrock.CfnPrompt(
             self,
             "GetSummaryPrompt",
@@ -25,12 +32,21 @@ class SequentialChain(Stack):
             variants=[
                 bedrock.CfnPrompt.PromptVariantProperty(
                     name="default",
-                    template_type="TEXT",
+                    template_type="CHAT",
                     # Configure the prompt
                     template_configuration=bedrock.CfnPrompt.PromptTemplateConfigurationProperty(
-                        text=bedrock.CfnPrompt.TextPromptTemplateConfigurationProperty(
-                            text="Write a 1-2 sentence summary for the book Pride & Prejudice.",
-                        )
+                        chat=bedrock.CfnPrompt.ChatPromptTemplateConfigurationProperty(
+                            messages=[
+                                bedrock.CfnPrompt.MessageProperty(
+                                    content=[
+                                        bedrock.CfnPrompt.ContentBlockProperty(
+                                            text=get_summary_prompt_content
+                                        )
+                                    ],
+                                    role="user",
+                                )
+                            ],
+                        ),
                     ),
                     # Configure the model and inference settings
                     model_id=model.model_id,
@@ -63,17 +79,42 @@ class SequentialChain(Stack):
             variants=[
                 bedrock.CfnPrompt.PromptVariantProperty(
                     name="default",
-                    template_type="TEXT",
-                    # Configure the prompt
+                    template_type="CHAT",
+                    # Configure the prompt, including the previous conversation
                     template_configuration=bedrock.CfnPrompt.PromptTemplateConfigurationProperty(
-                        text=bedrock.CfnPrompt.TextPromptTemplateConfigurationProperty(
-                            text="You previously gave me the following summary for the book Pride & Prejudice.\n{{summary}}\nNow write a short advertisement for the novel.",
+                        chat=bedrock.CfnPrompt.ChatPromptTemplateConfigurationProperty(
+                            messages=[
+                                bedrock.CfnPrompt.MessageProperty(
+                                    content=[
+                                        bedrock.CfnPrompt.ContentBlockProperty(
+                                            text=get_summary_prompt_content
+                                        )
+                                    ],
+                                    role="user",
+                                ),
+                                bedrock.CfnPrompt.MessageProperty(
+                                    content=[
+                                        bedrock.CfnPrompt.ContentBlockProperty(
+                                            text="{{summary}}"
+                                        ),
+                                    ],
+                                    role="assistant",
+                                ),
+                                bedrock.CfnPrompt.MessageProperty(
+                                    content=[
+                                        bedrock.CfnPrompt.ContentBlockProperty(
+                                            text=write_an_advertisement_prompt_content
+                                        )
+                                    ],
+                                    role="user",
+                                ),
+                            ],
                             input_variables=[
                                 bedrock.CfnPrompt.PromptInputVariableProperty(
                                     name="summary"
                                 ),
                             ],
-                        )
+                        ),
                     ),
                     # Configure the model and inference settings
                     model_id=model.model_id,
@@ -251,7 +292,7 @@ class SequentialChain(Stack):
         flow_execution_role.add_to_policy(
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
-                actions=["bedrock:GetPrompt"],
+                actions=["bedrock:RenderPrompt"],
                 resources=[
                     f"{get_summary_prompt.attr_arn}:*",
                     f"{write_an_advertisement_prompt.attr_arn}:*",

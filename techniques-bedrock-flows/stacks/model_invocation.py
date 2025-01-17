@@ -162,7 +162,7 @@ class ModelInvocation(Stack):
         flow_execution_role.add_to_policy(
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
-                actions=["bedrock:GetPrompt"],
+                actions=["bedrock:RenderPrompt"],
                 resources=[f"{get_summary_prompt.attr_arn}:*"],
             )
         )

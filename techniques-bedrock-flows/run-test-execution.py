@@ -42,6 +42,8 @@ def main():
     with open(f"test-inputs/{demo_name}.json", "r") as file:
         input_data = json.load(file)
 
+    print(f"Invoking flow {flow_id} with alias {flow_alias_id}")
+
     response = client_runtime.invoke_flow(
         flowIdentifier=flow_id,
         flowAliasIdentifier=flow_alias_id,
