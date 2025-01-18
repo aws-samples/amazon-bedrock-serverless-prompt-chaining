@@ -97,8 +97,7 @@ An example of a valid response is below, inside <example></example> XML tags.
         meal_scoring_prompt += """
 \}
 </example>
-Do not include any other content outside of the JSON object.
-"""
+Do not include any other content other than the JSON object in your response. Do not include any XML tags in your response."""
 
         meal_scoring_job = get_anthropic_claude_invoke_chain(
             self,
@@ -270,7 +269,8 @@ Answer no only if the chefs suggested very different meals.
 Answer yes if the chefs suggested the same meal, similar meals, or meals that are a small variation of each other.
 Start your response with an explanation of your reasoning, then provide a single 'yes' or 'no' indicating whether agreement has been reached.
 
-Your response should be formatted as a JSON object. An example of a valid response is below when the chefs do agree, inside <example></example> XML tags.
+Your response should be formatted as a JSON object.
+An example of a valid response is below when the chefs do agree, inside <example></example> XML tags.
 <example>
 \{
     "reasoning": "Brief reasons for why I believe the chefs have reached agreement...",
@@ -285,8 +285,7 @@ Another example of a valid response is below when the chefs do not agree, inside
     "do_chefs_agree": "no"
 \}
 </example>
-Do not include any other content outside of the JSON object.
-"""
+Do not include any other content other than the JSON object in your response. Do not include any XML tags in your response."""
 
         meal_debate_referee_job = get_anthropic_claude_invoke_chain(
             self,

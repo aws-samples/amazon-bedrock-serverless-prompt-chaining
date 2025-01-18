@@ -52,7 +52,7 @@ Another example of a valid response is below when the text does NOT refer to a b
     "is_book": "no"
 \}
 </example>
-Do not include any other content outside of the JSON object.""",
+Do not include any other content other than the JSON object in your response. Do not include any XML tags in your response.""",
                                         sfn.JsonPath.string_at("$$.Execution.Input"),
                                     ),
                                 }

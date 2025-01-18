@@ -40,8 +40,7 @@ An example of a valid response is below, inside <example></example> XML tags.
     \}
 ]
 </example>
-Do not include any other content outside of the JSON object.
-""",
+Do not include any other content other than the JSON object in your response. Do not include any XML tags in your response.""",
                 sfn.JsonPath.string_at("$$.Execution.Input.story_description"),
             ),
             max_tokens_to_sample=512,

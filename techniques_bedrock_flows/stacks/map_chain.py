@@ -35,7 +35,7 @@ An example of a valid response is below, inside <example></example> XML tags.
     }
 ]
 </example>
-Do not include any other content outside of the JSON object."""
+Do not include any other content other than the JSON object in your response. Do not include any XML tags in your response."""
 
         get_summary_prompt_content = (
             "Write a 1-2 sentence summary for the novel {{title}} by {{author}}."
