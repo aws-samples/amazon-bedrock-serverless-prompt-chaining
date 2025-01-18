@@ -36,7 +36,8 @@ class ConditionalChain(Stack):
 </text>
 Start your response with an explanation of your reasoning, then provide a single 'yes' or 'no' indicating whether the text refers to a book.
 
-Your response should be formatted as a JSON object. An example of a valid response is below when the text does refer to a book, inside <example></example> XML tags.
+Your response should be formatted as a JSON object.
+An example of a valid response is below when the text does refer to a book, inside <example></example> XML tags.
 <example>
 \{
     "reasoning": "Brief reasons for why I believe the text refers to a book...",
@@ -52,9 +53,7 @@ Another example of a valid response is below when the text does NOT refer to a b
 \}
 </example>
 Do not include any other content outside of the JSON object.""",
-                                        sfn.JsonPath.string_at(
-                                            "$$.Execution.Input"
-                                        ),
+                                        sfn.JsonPath.string_at("$$.Execution.Input"),
                                     ),
                                 }
                             ],

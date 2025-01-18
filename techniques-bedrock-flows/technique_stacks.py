@@ -6,8 +6,8 @@ from stacks.model_invocation import ModelInvocation
 from stacks.prompt_templating import PromptTemplating
 from stacks.sequential_chain import SequentialChain
 from stacks.parallel_chain import ParallelChain
+from stacks.conditional_chain import ConditionalChain
 
-# from stacks.conditional_chain import ConditionalChain
 # from stacks.human_input_chain import HumanInputChain
 # from stacks.map_chain import MapChain
 # from stacks.aws_service_invocation import AwsServiceInvocationChain
@@ -37,11 +37,11 @@ ParallelChain(
     "Techniques-Flows-ParallelChain",
     env=env,
 )
-# ConditionalChain(
-#     app,
-#     "Techniques-Flows-ConditionalChain",
-#     env=env,
-# )
+ConditionalChain(
+    app,
+    "Techniques-Flows-ConditionalChain",
+    env=env,
+)
 # HumanInputChain(
 #     app,
 #     "Techniques-Flows-HumanInput",
