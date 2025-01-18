@@ -232,6 +232,9 @@ class PipelineStack(Stack):
                 actions=[
                     "states:StartExecution",
                     "states:DescribeExecution",
+                    "bedrock:ListFlows",
+                    "bedrock:ListFlowAliases",
+                    "bedrock:InvokeFlow",
                 ],
                 resources=["*"],
             )
