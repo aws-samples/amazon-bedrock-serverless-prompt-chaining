@@ -62,6 +62,7 @@ class AwsServiceInvocationChain(Stack):
                 }
             ),
             result_path=sfn.JsonPath.DISCARD,
+            output_path="$.Body.content[0].text",
         )
 
         chain = get_summary.next(notify_me)
