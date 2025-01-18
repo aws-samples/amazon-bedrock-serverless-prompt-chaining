@@ -38,7 +38,7 @@ Do not include any other content outside of the JSON object."""
             model=bedrock.FoundationModel.from_foundation_model_id(
                 self,
                 "Model",
-                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_INSTANT_V1,
+                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
             ),
             # Provide the input to the model, including the prompt and inference properties
             body=sfn.TaskInput.from_object(
@@ -131,7 +131,7 @@ Do not include any other content outside of the JSON object."""
             model=bedrock.FoundationModel.from_foundation_model_id(
                 self,
                 "Model",
-                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_INSTANT_V1,
+                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
             ),
             # Provide the input to the model, including the prompt and inference properties
             body=sfn.TaskInput.from_object(

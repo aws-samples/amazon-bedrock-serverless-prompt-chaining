@@ -108,7 +108,7 @@ def get_anthropic_claude_prepare_prompt_step(
 def get_anthropic_claude_invoke_model_step(
     scope: Construct,
     id: builtins.str,
-    claude_model_id: bedrock.FoundationModelIdentifier = bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_INSTANT_V1,
+    claude_model_id: bedrock.FoundationModelIdentifier = bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
     max_tokens_to_sample: typing.Optional[int] = 250,
     temperature: typing.Optional[float] = 1,
     flatten_messages: typing.Optional[bool] = False,
@@ -205,7 +205,7 @@ def get_anthropic_claude_invoke_chain(
     scope: Construct,
     id: builtins.str,
     prompt: builtins.str,
-    claude_model_id: bedrock.FoundationModelIdentifier = bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_INSTANT_V1,
+    claude_model_id: bedrock.FoundationModelIdentifier = bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
     initial_assistant_text: typing.Optional[str] = "",
     include_initial_assistant_text_in_response: typing.Optional[bool] = True,
     max_tokens_to_sample: typing.Optional[int] = 250,
