@@ -49,6 +49,12 @@ updates:
   open-pull-requests-limit: 10
   versioning-strategy: increase
 - package-ecosystem: pip
+  directory: "/techniques-bedrock-flows/functions/parse_json_response"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 10
+  versioning-strategy: increase
+- package-ecosystem: pip
   directory: "/functions/trip_planner/pdf_creator"
   schedule:
     interval: monthly

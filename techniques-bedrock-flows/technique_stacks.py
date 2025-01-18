@@ -7,9 +7,9 @@ from stacks.prompt_templating import PromptTemplating
 from stacks.sequential_chain import SequentialChain
 from stacks.parallel_chain import ParallelChain
 from stacks.conditional_chain import ConditionalChain
+from stacks.map_chain import MapChain
 
 # from stacks.human_input_chain import HumanInputChain
-# from stacks.map_chain import MapChain
 # from stacks.aws_service_invocation import AwsServiceInvocationChain
 # from stacks.validation_chain import ValidationChain
 import os
@@ -42,14 +42,14 @@ ConditionalChain(
     "Techniques-Flows-ConditionalChain",
     env=env,
 )
+MapChain(
+    app,
+    "Techniques-Flows-Map",
+    env=env,
+)
 # HumanInputChain(
 #     app,
 #     "Techniques-Flows-HumanInput",
-#     env=env,
-# )
-# MapChain(
-#     app,
-#     "Techniques-Flows-Map",
 #     env=env,
 # )
 # AwsServiceInvocationChain(
