@@ -149,7 +149,9 @@ class PipelineStack(Stack):
                         },
                         "build": {
                             "commands": [
-                                "cd techniques/",
+                                "cd techniques_step_functions/",
+                                "cdk deploy --app 'python3 technique_stacks.py' --all --require-approval=never",
+                                "cd ../techniques_bedrock_flows/",
                                 "cdk deploy --app 'python3 technique_stacks.py' --all --require-approval=never",
                             ]
                         },
@@ -182,7 +184,8 @@ class PipelineStack(Stack):
                     "phases": {
                         "build": {
                             "commands": [
-                                "cd techniques/",
+                                # Test Step Functions examples
+                                "cd techniques_step_functions/",
                                 "./run-test-execution.sh ModelInvocation",
                                 "sleep 15",
                                 "./run-test-execution.sh PromptTemplating",
@@ -201,6 +204,19 @@ class PipelineStack(Stack):
                                 "./run-test-execution.sh AwsServiceInvocation",
                                 "sleep 15",
                                 "./run-test-execution.sh Validation",
+                                # Test Bedrock Flows examples
+                                "cd ../techniques_bedrock_flows/",
+                                "python3 run-test-execution.py ModelInvocation",
+                                "sleep 15",
+                                "python3 run-test-execution.py PromptTemplating",
+                                "sleep 15",
+                                "python3 run-test-execution.py SequentialChain",
+                                "sleep 15",
+                                "python3 run-test-execution.py ParallelChain",
+                                "sleep 15",
+                                "python3 run-test-execution.py ConditionalChain",
+                                "sleep 15",
+                                "python3 run-test-execution.py Map",
                             ]
                         },
                     },

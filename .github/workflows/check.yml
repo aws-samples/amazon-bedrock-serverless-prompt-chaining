@@ -47,4 +47,8 @@ jobs:
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
 
+        pytest test_cdk_stacks.py
+        cd techniques_bedrock_flows
+        pytest
+        cd ../techniques_step_functions
         pytest

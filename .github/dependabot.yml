@@ -43,13 +43,13 @@ updates:
   open-pull-requests-limit: 10
   versioning-strategy: increase
 - package-ecosystem: pip
-  directory: "/techniques/functions/parse_json_response"
+  directory: "/techniques_step_functions/functions/parse_json_response"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
 - package-ecosystem: pip
-  directory: "/techniques-bedrock-flows/functions/parse_json_response"
+  directory: "/techniques_bedrock_flows/functions/parse_json_response"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10

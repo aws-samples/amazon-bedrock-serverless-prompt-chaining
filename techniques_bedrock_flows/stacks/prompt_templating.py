@@ -6,7 +6,7 @@ from aws_cdk import (
 from constructs import Construct
 
 
-class SequentialChain(Stack):
+class FlowsPromptTemplating(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
@@ -17,36 +17,25 @@ class SequentialChain(Stack):
         )
 
         # Define the prompts
-        get_summary_prompt_content = (
-            "Write a 1-2 sentence summary for the book Pride & Prejudice."
-        )
-        write_an_advertisement_prompt_content = (
-            "Now write a short advertisement for the novel."
-        )
-
         get_summary_prompt = bedrock.CfnPrompt(
             self,
             "GetSummaryPrompt",
-            name="Flows-SequentialChain-GetSummary",
+            name="Flows-PromptTemplating-GetSummary",
             default_variant="default",
             variants=[
                 bedrock.CfnPrompt.PromptVariantProperty(
                     name="default",
-                    template_type="CHAT",
+                    template_type="TEXT",
                     # Configure the prompt
                     template_configuration=bedrock.CfnPrompt.PromptTemplateConfigurationProperty(
-                        chat=bedrock.CfnPrompt.ChatPromptTemplateConfigurationProperty(
-                            messages=[
-                                bedrock.CfnPrompt.MessageProperty(
-                                    content=[
-                                        bedrock.CfnPrompt.ContentBlockProperty(
-                                            text=get_summary_prompt_content
-                                        )
-                                    ],
-                                    role="user",
-                                )
+                        text=bedrock.CfnPrompt.TextPromptTemplateConfigurationProperty(
+                            text="Write a 1-2 sentence summary for the book {{book}}.",
+                            input_variables=[
+                                bedrock.CfnPrompt.PromptInputVariableProperty(
+                                    name="book"
+                                ),
                             ],
-                        ),
+                        )
                     ),
                     # Configure the model and inference settings
                     model_id=model.model_id,
@@ -70,76 +59,6 @@ class SequentialChain(Stack):
         )
         # Ensure prompt is fully stabilized before creating a new version
         get_summary_prompt_version.add_dependency(get_summary_prompt)
-
-        write_an_advertisement_prompt = bedrock.CfnPrompt(
-            self,
-            "GetAdvertisementPrompt",
-            name="Flows-SequentialChain-GetAdvertisement",
-            default_variant="default",
-            variants=[
-                bedrock.CfnPrompt.PromptVariantProperty(
-                    name="default",
-                    template_type="CHAT",
-                    # Configure the prompt, including the previous conversation
-                    template_configuration=bedrock.CfnPrompt.PromptTemplateConfigurationProperty(
-                        chat=bedrock.CfnPrompt.ChatPromptTemplateConfigurationProperty(
-                            messages=[
-                                bedrock.CfnPrompt.MessageProperty(
-                                    content=[
-                                        bedrock.CfnPrompt.ContentBlockProperty(
-                                            text=get_summary_prompt_content
-                                        )
-                                    ],
-                                    role="user",
-                                ),
-                                bedrock.CfnPrompt.MessageProperty(
-                                    content=[
-                                        bedrock.CfnPrompt.ContentBlockProperty(
-                                            text="{{summary}}"
-                                        ),
-                                    ],
-                                    role="assistant",
-                                ),
-                                bedrock.CfnPrompt.MessageProperty(
-                                    content=[
-                                        bedrock.CfnPrompt.ContentBlockProperty(
-                                            text=write_an_advertisement_prompt_content
-                                        )
-                                    ],
-                                    role="user",
-                                ),
-                            ],
-                            input_variables=[
-                                bedrock.CfnPrompt.PromptInputVariableProperty(
-                                    name="summary"
-                                ),
-                            ],
-                        ),
-                    ),
-                    # Configure the model and inference settings
-                    model_id=model.model_id,
-                    inference_configuration=bedrock.CfnPrompt.PromptInferenceConfigurationProperty(
-                        text=bedrock.CfnPrompt.PromptModelInferenceConfigurationProperty(
-                            max_tokens=250,
-                            temperature=1,
-                        )
-                    ),
-                )
-            ],
-        )
-
-        write_an_advertisement_prompt_version = bedrock.CfnPromptVersion(
-            self,
-            "GetAdvertisementPromptVersion",
-            prompt_arn=write_an_advertisement_prompt.attr_arn,
-            # Description updates anytime the Prompt resource is updated,
-            # so a new version is created when the Prompt changes
-            description=f"Tracking prompt timestamp {write_an_advertisement_prompt.attr_updated_at}",
-        )
-        # Ensure prompt is fully stabilized before creating a new version
-        write_an_advertisement_prompt_version.add_dependency(
-            write_an_advertisement_prompt
-        )
 
         # Configure the flow's nodes and connections between nodes
         input_node = bedrock.CfnFlow.FlowNodeProperty(
@@ -166,36 +85,8 @@ class SequentialChain(Stack):
                 )
             ),
             inputs=[
-                # This input will be ignored, because the prompt is not templated
                 bedrock.CfnFlow.FlowNodeInputProperty(
-                    name="ignore",
-                    type="String",
-                    expression="$.data",
-                )
-            ],
-            outputs=[
-                bedrock.CfnFlow.FlowNodeOutputProperty(
-                    name="modelCompletion",
-                    type="String",
-                )
-            ],
-        )
-
-        write_an_advertisement_node = bedrock.CfnFlow.FlowNodeProperty(
-            name="Generate_Book_Advertisement",
-            type="Prompt",
-            configuration=bedrock.CfnFlow.FlowNodeConfigurationProperty(
-                prompt=bedrock.CfnFlow.PromptFlowNodeConfigurationProperty(
-                    source_configuration=bedrock.CfnFlow.PromptFlowNodeSourceConfigurationProperty(
-                        resource=bedrock.CfnFlow.PromptFlowNodeResourceConfigurationProperty(
-                            prompt_arn=write_an_advertisement_prompt_version.attr_arn,
-                        )
-                    )
-                )
-            ),
-            inputs=[
-                bedrock.CfnFlow.FlowNodeInputProperty(
-                    name="summary",
+                    name="book",
                     type="String",
                     expression="$.data",
                 )
@@ -221,7 +112,6 @@ class SequentialChain(Stack):
         )
 
         connections = [
-            # Input -> Get Summary
             bedrock.CfnFlow.FlowConnectionProperty(
                 name="_".join([input_node.name, get_summary_node.name]),
                 type="Data",
@@ -234,30 +124,14 @@ class SequentialChain(Stack):
                     ),
                 ),
             ),
-            # Get Summary -> Write an Advertisement
             bedrock.CfnFlow.FlowConnectionProperty(
-                name="_".join(
-                    [get_summary_node.name, write_an_advertisement_node.name]
-                ),
+                name="_".join([get_summary_node.name, output_node.name]),
                 type="Data",
                 source=get_summary_node.name,
-                target=write_an_advertisement_node.name,
-                configuration=bedrock.CfnFlow.FlowConnectionConfigurationProperty(
-                    data=bedrock.CfnFlow.FlowDataConnectionConfigurationProperty(
-                        source_output=get_summary_node.outputs[0].name,
-                        target_input=write_an_advertisement_node.inputs[0].name,
-                    ),
-                ),
-            ),
-            # Write an Advertisement -> Output
-            bedrock.CfnFlow.FlowConnectionProperty(
-                name="_".join([write_an_advertisement_node.name, output_node.name]),
-                type="Data",
-                source=write_an_advertisement_node.name,
                 target=output_node.name,
                 configuration=bedrock.CfnFlow.FlowConnectionConfigurationProperty(
                     data=bedrock.CfnFlow.FlowDataConnectionConfigurationProperty(
-                        source_output=write_an_advertisement_node.outputs[0].name,
+                        source_output=get_summary_node.outputs[0].name,
                         target_input=output_node.inputs[0].name,
                     ),
                 ),
@@ -293,10 +167,7 @@ class SequentialChain(Stack):
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
                 actions=["bedrock:RenderPrompt"],
-                resources=[
-                    f"{get_summary_prompt.attr_arn}:*",
-                    f"{write_an_advertisement_prompt.attr_arn}:*",
-                ],
+                resources=[f"{get_summary_prompt.attr_arn}:*"],
             )
         )
 
@@ -304,15 +175,10 @@ class SequentialChain(Stack):
         flow = bedrock.CfnFlow(
             self,
             "Flow",
-            name="Flows-SequentialChain",
+            name="Flows-PromptTemplating",
             execution_role_arn=flow_execution_role.role_arn,
             definition=bedrock.CfnFlow.FlowDefinitionProperty(
-                nodes=[
-                    input_node,
-                    get_summary_node,
-                    write_an_advertisement_node,
-                    output_node,
-                ],
+                nodes=[input_node, get_summary_node, output_node],
                 connections=connections,
             ),
         )

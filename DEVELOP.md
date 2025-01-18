@@ -16,6 +16,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 
 find . -name requirements.txt | xargs -I{} pip install -r {}
+find . -name requirements-dev.txt | xargs -I{} pip install -r {}
 ```
 After this initial setup, you only need to run `source .venv/bin/activate` to use the virtual env for further development.
 
@@ -23,7 +24,7 @@ After this initial setup, you only need to run `source .venv/bin/activate` to us
 
 Deploy all the stacks:
 ```
-cd techniques
+cd techniques_step_functions
 
 cdk deploy --app 'python3 technique_stacks.py' --all
 ```
@@ -53,7 +54,7 @@ Run an example input through each flow example. Edit the files in the `test-inpu
 
 Deploy all the stacks:
 ```
-cd techniques-bedrock-flows
+cd techniques_bedrock_flows
 
 cdk deploy --app 'python3 technique_stacks.py' --all
 ```

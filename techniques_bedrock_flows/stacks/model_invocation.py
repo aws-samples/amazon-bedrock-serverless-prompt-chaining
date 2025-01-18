@@ -6,7 +6,7 @@ from aws_cdk import (
 from constructs import Construct
 
 
-class PromptTemplating(Stack):
+class FlowsModelInvocation(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
@@ -20,7 +20,7 @@ class PromptTemplating(Stack):
         get_summary_prompt = bedrock.CfnPrompt(
             self,
             "GetSummaryPrompt",
-            name="Flows-PromptTemplating-GetSummary",
+            name="Flows-ModelInvocation-GetSummary",
             default_variant="default",
             variants=[
                 bedrock.CfnPrompt.PromptVariantProperty(
@@ -29,12 +29,7 @@ class PromptTemplating(Stack):
                     # Configure the prompt
                     template_configuration=bedrock.CfnPrompt.PromptTemplateConfigurationProperty(
                         text=bedrock.CfnPrompt.TextPromptTemplateConfigurationProperty(
-                            text="Write a 1-2 sentence summary for the book {{book}}.",
-                            input_variables=[
-                                bedrock.CfnPrompt.PromptInputVariableProperty(
-                                    name="book"
-                                ),
-                            ],
+                            text="Write a 1-2 sentence summary for the book Pride & Prejudice.",
                         )
                     ),
                     # Configure the model and inference settings
@@ -85,8 +80,9 @@ class PromptTemplating(Stack):
                 )
             ),
             inputs=[
+                # This input will be ignored, because the prompt is not templated
                 bedrock.CfnFlow.FlowNodeInputProperty(
-                    name="book",
+                    name="ignore",
                     type="String",
                     expression="$.data",
                 )
@@ -175,7 +171,7 @@ class PromptTemplating(Stack):
         flow = bedrock.CfnFlow(
             self,
             "Flow",
-            name="Flows-PromptTemplating",
+            name="Flows-ModelInvocation",
             execution_role_arn=flow_execution_role.role_arn,
             definition=bedrock.CfnFlow.FlowDefinitionProperty(
                 nodes=[input_node, get_summary_node, output_node],

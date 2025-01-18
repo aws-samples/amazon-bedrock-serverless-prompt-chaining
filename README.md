@@ -45,7 +45,7 @@ Both Bedrock and Step Functions are serverless, so you don't have to manage any 
 
 This repository illustrate many prompt chaining techniques that can be orchestrated by Step Functions.
 The chaining techniques are described below with AWS CDK sample code snippets.
-The full code can be found in the [techniques directory](techniques/).
+The full code can be found in the [techniques_step_functions directory](techniques_step_functions/).
 
 ### Model invocation
 
