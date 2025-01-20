@@ -1,8 +1,7 @@
 ## Amazon Bedrock Serverless Prompt Chaining
 
-This repository provides examples of using [AWS Step Functions](https://aws.amazon.com/step-functions/)
-and [Amazon Bedrock](https://aws.amazon.com/bedrock/) to build complex, serverless, and highly scalable
-generative AI applications with prompt chaining.
+This repository provides examples of how to build complex, serverless, and highly scalable
+generative AI applications with prompt chaining and [Amazon Bedrock](https://aws.amazon.com/bedrock/).
 
 [Prompt chaining](https://docs.anthropic.com/claude/docs/prompt-chaining) is a technique for
 building complex generative AI applications and accomplishing complex tasks with large language models (LLMs).
@@ -11,11 +10,25 @@ make up your overall complex task that you would like the LLM to complete for yo
 To accomplish the overall task, your application feeds each subtask prompt to the LLM in a pre-defined order or
 according to a set of defined rules.
 
-For applications using prompt chaining, Step Functions can orchestrate complex chains of prompts and invoke foundation models in Bedrock.
-Beyond simple ordered chains of prompts, Step Functions workflows can contain loops, map jobs, parallel jobs,
-conditions, and input/output manipulation. Workflows can also chain together steps that invoke a foundation model in Bedrock,
+<p align="center">
+<img src="/webapp/pages/workflow_images/blog_post.png" alt="Screenshot" style="height: 400px" />
+</p>
+
+This repository shows how to implement prompt chaining with either of these two AWS services,
+depending on your needs and preferences:
+1. **[AWS Step Functions](https://aws.amazon.com/step-functions/)**:
+Step Functions can orchestrate complex workflows and invoke foundation models in Bedrock.
+Beyond simple ordered chains of prompts, Step Functions state machines can contain loops, map jobs, parallel jobs,
+conditions, and input/output manipulation. State machines can also chain together steps that invoke a foundation model in Bedrock,
 steps that invoke custom code in AWS Lambda functions, and steps that interact with over 220 AWS services.
-Both Bedrock and Step Functions are serverless, so you don't have to manage any infrastructure to deploy and scale up your application.
+2. **[Amazon Bedrock Flows](https://aws.amazon.com/bedrock/flows/)**:
+Bedrock Flows is purpose-built for building generative AI workflows with Bedrock.
+Flows can iterate over arrays, invoke tasks in parallel, and define conditions for workflow logic.
+Flows can chain together steps that invoke a model in Bedrock, invoke a Bedrock agent, and
+retrieve data from a Bedrock knowledge base. Flows can also interact with S3, Lambda, and Lex.
+
+These services (Bedrock, Bedrock Flows, and Step Functions) are all serverless,
+so you don't need to manage any infrastructure to deploy and scale up your application.
 
 <!-- toc -->
 
@@ -24,12 +37,12 @@ Both Bedrock and Step Functions are serverless, so you don't have to manage any 
     1. [Prompt templating](#prompt-templating)
     1. [Sequential chains](#sequential-chains)
     1. [Parallel chains](#parallel-chains)
+    1. [Map chains](#map-chains)
     1. [Conditions](#conditions)
-    1. [Maps](#maps)
     1. [Chain prompts and other AWS services](#chain-prompts-and-other-aws-services)
-    1. [Validate output and re-prompt](#validate-output-and-re-prompt)
+    1. [Handle failures in chains](#handle-failures-in-chains)
     1. [Wait for human input](#wait-for-human-input)
-1. [Prompt chaining examples](#prompt-chaining-examples)
+1. [Prompt chaining applications](#prompt-chaining-applications)
     1. [Write a blog post](#write-a-blog-post)
     1. [Write a story](#write-a-story)
     1. [Plan a trip](#plan-a-trip)
@@ -43,11 +56,35 @@ Both Bedrock and Step Functions are serverless, so you don't have to manage any 
 
 ## Prompt chaining techniques
 
-This repository illustrate many prompt chaining techniques that can be orchestrated by Step Functions.
+This repository illustrate many prompt chaining techniques that can be orchestrated by Step Functions and Bedrock Flows.
 The chaining techniques are described below with AWS CDK sample code snippets.
-The full code can be found in the [techniques_step_functions directory](techniques_step_functions/).
+The full code can be found in the [techniques_step_functions](techniques_step_functions/)
+and [techniques_bedrock_flows](techniques_bedrock_flows/) directories.
 
 ### Model invocation
+
+Start prompt chaining by defining a static prompt, and have the chain invoke a model in Bedrock with that prompt.
+
+<table>
+<tr>
+<td> Sample chain </td> <td> Sample output </td>
+</tr>
+<tr>
+<td width="250px"><img src="docs/screenshots/model_invocation.png" alt="Screenshot" /></td>
+<td>
+Here is a one sentence summary of Pride & Prejudice by Jane Austen:
+
+The story follows the romantic lives and relationships between the Bennet family
+daughters and the eligible gentlemen of the neighborhood, most significantly the
+love story between Elizabeth Bennet and Mr. Darcy that develops despite their
+initial prejudices against each other.
+</td>
+</tr>
+</table>
+
+<details>
+
+<summary><b>Model invocation with Step Functions</b></summary>
 
 Step Functions can invoke models in Bedrock using the
 [optimized integration for Bedrock](https://docs.aws.amazon.com/step-functions/latest/dg/connect-bedrock.html).
@@ -95,45 +132,103 @@ tasks.BedrockInvokeModel(
 )
 ```
 
-<table>
-<tr>
-<td> Sample state machine </td> <td> Sample output </td>
-</tr>
-<tr>
-<td width="250px"><img src="docs/screenshots/model_invocation.png" alt="Screenshot" /></td>
-<td>
-Here is a one sentence summary of Pride & Prejudice by Jane Austen:
+See a full example of using this technique with Step Functions [here](techniques_step_functions/stacks/model_invocation.py).
+</details>
 
-The story follows the romantic lives and relationships between the Bennet family
-daughters and the eligible gentlemen of the neighborhood, most significantly the
-love story between Elizabeth Bennet and Mr. Darcy that develops despite their
-initial prejudices against each other.
-</td>
-</tr>
-</table>
+<details>
+
+<summary><b>Model invocation with Bedrock Flows</b></summary>
+
+Define and store the static prompt using
+[Bedrock prompt management](https://aws.amazon.com/bedrock/prompt-management/).
+
+```python
+from aws_cdk import (
+    aws_bedrock as bedrock,
+)
+
+# Create a prompt in Bedrock Prompt Management
+generate_book_summary_prompt = bedrock.CfnPrompt(
+    self,
+    "GetSummaryPrompt",
+    default_variant="default",
+    variants=[
+        bedrock.CfnPrompt.PromptVariantProperty(
+            name="default",
+            template_type="TEXT",
+            template_configuration=bedrock.CfnPrompt.PromptTemplateConfigurationProperty(
+                text=bedrock.CfnPrompt.TextPromptTemplateConfigurationProperty(
+                    text="Write a 1-2 sentence summary for the book Pride & Prejudice.",
+                )
+            ),
+            model_id=bedrock.FoundationModel.from_foundation_model_id(
+                self,
+                "Model",
+                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
+            ),
+            inference_configuration=bedrock.CfnPrompt.PromptInferenceConfigurationProperty(
+                text=bedrock.CfnPrompt.PromptModelInferenceConfigurationProperty(
+                    max_tokens=250,
+                    temperature=1,
+                )
+            ),
+        )
+    ],
+)
+
+# Create a version of the prompt
+generate_book_summary_prompt_version = bedrock.CfnPromptVersion(
+    self,
+    "GetSummaryPromptVersion",
+    prompt_arn=generate_book_summary_prompt.attr_arn,
+    # Description updates anytime the Prompt resource is updated,
+    # so a new version is created when the Prompt changes
+    description=f"Tracking prompt timestamp {generate_book_summary_prompt.attr_updated_at}",
+)
+```
+
+Then, add a [Prompt flow node](https://docs.aws.amazon.com/bedrock/latest/userguide/flows-nodes.html#flows-nodes-data)
+to the flow.
+
+```python
+generate_book_summary_node = bedrock.CfnFlow.FlowNodeProperty(
+    name="Generate_Book_Summary",
+    type="Prompt",
+    configuration=bedrock.CfnFlow.FlowNodeConfigurationProperty(
+        prompt=bedrock.CfnFlow.PromptFlowNodeConfigurationProperty(
+            source_configuration=bedrock.CfnFlow.PromptFlowNodeSourceConfigurationProperty(
+                resource=bedrock.CfnFlow.PromptFlowNodeResourceConfigurationProperty(
+                    prompt_arn=generate_book_summary_prompt_version.attr_arn,
+                )
+            )
+        )
+    ),
+    inputs=[
+        bedrock.CfnFlow.FlowNodeInputProperty(
+            name="input",
+            type="String",
+            expression="$.data",
+        )
+    ],
+    outputs=[
+        bedrock.CfnFlow.FlowNodeOutputProperty(
+            name="modelCompletion",
+            type="String",
+        )
+    ],
+)
+```
+
+See a full example of using this technique with Bedrock Flows [here](techniques_bedrock_flows/stacks/model_invocation.py).
+</details>
 
 ### Prompt templating
 
-With Step Functions [intrinsic functions](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-intrinsic-functions.html),
-prompts be templated. Values such as the execution input or outputs from previous steps
-can be injected into the prompt.
-
-```python
-from aws_cdk import aws_stepfunctions as sfn
-
-# This prompt is templated with the novel name as a variable
-# from the Step Functions execution input.
-# The input to the Step Functions execution could be:
-# "Pride and Prejudice"
-"text": sfn.JsonPath.format(
-    "Write a 1-2 sentence summary for the book {}.",
-    sfn.JsonPath.string_at("$$.Execution.Input"),
-),
-```
+Use templated strings in your prompt chain's prompts, so you can inject values like user input.
 
 <table>
 <tr>
-<td> Sample state machine </td> <td> Sample input </td> <td> Sample output </td>
+<td> Sample chain </td> <td> Sample input </td> <td> Sample output </td>
 </tr>
 <tr>
 <td width="250px"><img src="docs/screenshots/prompt_templating.png" alt="Screenshot" /></td>
@@ -148,12 +243,108 @@ misunderstandings before ultimately falling in love.
 </tr>
 </table>
 
+<details>
+
+<summary><b>Prompt templating with Step Functions</b></summary>
+
+Prompts can be templated with Step Functions
+[intrinsic functions](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-intrinsic-functions.html),
+Values such as the execution input or outputs from previous steps can be injected into the prompt.
+
+```python
+from aws_cdk import aws_stepfunctions as sfn
+
+# This prompt is templated with the novel name as a variable
+# from the Step Functions execution input.
+# The input to the Step Functions execution could be:
+# "Pride and Prejudice"
+"text": sfn.JsonPath.format(
+    "Write a 1-2 sentence summary for the book {}.",
+    sfn.JsonPath.string_at("$$.Execution.Input"),
+),
+```
+
+See a full example of using this technique with Step Functions [here](techniques_step_functions/stacks/prompt_templating.py).
+</details>
+
+<details>
+
+<summary><b>Prompt templating with Bedrock Flows</b></summary>
+
+With Bedrock prompt management, an input variable can be added to the stored prompt.
+
+```python
+template_configuration=bedrock.CfnPrompt.PromptTemplateConfigurationProperty(
+    text=bedrock.CfnPrompt.TextPromptTemplateConfigurationProperty(
+        text="Write a 1-2 sentence summary for the book {{book}}.",
+        input_variables=[
+            bedrock.CfnPrompt.PromptInputVariableProperty(
+                name="book"
+            ),
+        ],
+    )
+)
+```
+
+The flow node can define that same input variable. When the flow is invoked, the flow node
+will use the value of "book" to render the stored prompt.
+
+```python
+inputs=[
+    bedrock.CfnFlow.FlowNodeInputProperty(
+        name="book",
+        type="String",
+        expression="$.data",
+    )
+]
+```
+
+In the flow's connections, hook the input of the flow to the prompt node's input variable.
+
+```python
+bedrock.CfnFlow.FlowConnectionProperty(
+    name="Input_Node_To_Get_Summary_Prompt_Node",
+    type="Data",
+    source=input_node.name,
+    target=generate_book_summary_node.name,
+    configuration=bedrock.CfnFlow.FlowConnectionConfigurationProperty(
+        data=bedrock.CfnFlow.FlowDataConnectionConfigurationProperty(
+            source_output=input_node.outputs[0].name,
+            target_input=generate_book_summary_node.inputs[0].name,
+        ),
+    ),
+)
+```
+
+See a full example of using this technique with Bedrock Flows [here](techniques_bedrock_flows/stacks/prompt_templating.py).
+</details>
+
 ### Sequential chains
 
 In a sequential chain, the model response from the first prompt in the chain
 can be passed as part of the second step's prompt in the chain.
+For example, the first prompt might generate a book's summary.
+Then, the second prompt might use that generated book summary
+as context for a second task, such as writing an advertisement for the book.
 
-For example, the first prompt might generate a book's summary:
+<table>
+<tr>
+<td> Sample chain </td> <td> Sample output </td>
+</tr>
+<tr>
+<td width="250px"><img src="docs/screenshots/sequential_chain.png" alt="Screenshot" /></td>
+<td>
+Are you looking for a classic love story with wit and social commentary? then Pride & Prejudice by Jane Austen is the novel for you. Follow Elizabeth Bennet and the landed gentlemen Mr. Darcy as they spar with their words but find their prejudices falling away to reveal a deeper affection. Austen offers a window into 19th century English society while crafting a tale as charming and compelling today as when it was first published. With her sharp insights and irresistible characters, Pride & Prejudice continues to enthrall readers after over 200 years. See beyond hasty judgments to see the truth of what really lies in the heart in this beloved work of romance and social satire.
+</td>
+</tr>
+</table>
+
+<details>
+
+<summary><b>Sequential chains with Step Functions</b></summary>
+
+Define the first prompt:
+
 ```python
 "messages": [
     {
@@ -169,14 +360,8 @@ For example, the first prompt might generate a book's summary:
 ],
 ```
 
-The first prompt can be chained to a second prompt in the Step Functions state machine definition:
-```python
-chain = generate_book_summary.next(generate_book_advertisement)
-```
-
-Then, the second prompt might use that generated book's summary
-as context for a second task. Step Functions intrinsic functions
-are used to inject the previous step's output into this step.
+Use Step Functions intrinsic functions to inject the first prompt's output into
+the second prompt's context.
 ```python
 "messages": [
     {
@@ -207,17 +392,108 @@ are used to inject the previous step's output into this step.
 ],
 ```
 
-<table>
-<tr>
-<td> Sample state machine </td> <td> Sample output </td>
-</tr>
-<tr>
-<td width="250px"><img src="docs/screenshots/sequential_chain.png" alt="Screenshot" /></td>
-<td>
-Are you looking for a classic love story with wit and social commentary? then Pride & Prejudice by Jane Austen is the novel for you. Follow Elizabeth Bennet and the landed gentlemen Mr. Darcy as they spar with their words but find their prejudices falling away to reveal a deeper affection. Austen offers a window into 19th century English society while crafting a tale as charming and compelling today as when it was first published. With her sharp insights and irresistible characters, Pride & Prejudice continues to enthrall readers after over 200 years. See beyond hasty judgments to see the truth of what really lies in the heart in this beloved work of romance and social satire.
-</td>
-</tr>
-</table>
+The first prompt can then be chained to a second prompt in the state machine:
+```python
+chain = generate_book_summary.next(generate_book_advertisement)
+```
+
+See a full example of using this technique with Step Functions [here](techniques_step_functions/stacks/sequential_chain.py).
+</details>
+
+<details>
+
+<summary><b>Sequential chains with Bedrock Flows</b></summary>
+
+Define the first prompt:
+
+```python
+template_configuration=bedrock.CfnPrompt.PromptTemplateConfigurationProperty(
+    text=bedrock.CfnPrompt.TextPromptTemplateConfigurationProperty(
+        text="Write a 1-2 sentence summary for the book Pride & Prejudice.",
+    )
+)
+```
+
+Inject the first prompt's output into the second prompt's context using an input variable
+mamed "summary" in the second prompt.
+
+```python
+generate_book_advertisement_prompt = bedrock.CfnPrompt(
+    self,
+    "GetAdvertisementPrompt",
+    variants=[
+        bedrock.CfnPrompt.PromptVariantProperty(
+            name="default",
+            template_type="CHAT",
+            template_configuration=bedrock.CfnPrompt.PromptTemplateConfigurationProperty(
+                chat=bedrock.CfnPrompt.ChatPromptTemplateConfigurationProperty(
+                    messages=[
+                        bedrock.CfnPrompt.MessageProperty(
+                            content=[
+                                bedrock.CfnPrompt.ContentBlockProperty(
+                                    text="Write a 1-2 sentence summary for the book Pride & Prejudice."
+                                )
+                            ],
+                            role="user",
+                        ),
+                        bedrock.CfnPrompt.MessageProperty(
+                            content=[
+                                bedrock.CfnPrompt.ContentBlockProperty(
+                                    text="{{summary}}"
+                                ),
+                            ],
+                            role="assistant",
+                        ),
+                        bedrock.CfnPrompt.MessageProperty(
+                            content=[
+                                bedrock.CfnPrompt.ContentBlockProperty(
+                                    text="Now write a short advertisement for the novel."
+                                )
+                            ],
+                            role="user",
+                        ),
+                    ],
+                    input_variables=[
+                        bedrock.CfnPrompt.PromptInputVariableProperty(
+                            name="summary"
+                        ),
+                    ],
+                ),
+            ),
+...
+```
+
+Define the same "summary" input variable in the second prompt's flow node.
+
+```python
+inputs=[
+    bedrock.CfnFlow.FlowNodeInputProperty(
+        name="summary",
+        type="String",
+        expression="$.data",
+    )
+]
+```
+
+In the flow's connections, connect the output of the first prompt with input of the second prompt.
+
+```python
+bedrock.CfnFlow.FlowConnectionProperty(
+    name="Get_Summary_To_Write_Advertisement",
+    type="Data",
+    source=generate_book_summary_node.name,
+    target=generate_book_advertisement_node.name,
+    configuration=bedrock.CfnFlow.FlowConnectionConfigurationProperty(
+        data=bedrock.CfnFlow.FlowDataConnectionConfigurationProperty(
+            source_output="modelCompletion",
+            target_input="summary",
+        ),
+    ),
+),
+```
+
+See a full example of using this technique with Bedrock Flows [here](techniques_bedrock_flows/stacks/sequential_chain.py).
+</details>
 
 ### Parallel chains
 
@@ -225,32 +501,9 @@ Some steps in chains can be executed in parallel, with the results merged togeth
 For example, two prompts can run in parallel, and both model responses can be used as
 context in a later prompt in the chain.
 
-In the Step Functions state machine definition, parallel tasks can be set as
-branches of a [Parallel state](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-parallel-state.html)
-in the state machine.
-In this example, the `generate_book_advertisement` task will receive as input a JSON object
-containing the model response from the `generate_book_summary` task as the `summary` value
-and the model response from the `generate_book_target_audience` task as the `audience` value.
-```python
-from aws_cdk import aws_stepfunctions as sfn
-
-chain = (
-    sfn.Parallel(
-        self,
-        "Parallel Tasks",
-        result_selector={
-            "summary.$": "$[0]",
-            "audience.$": "$[1]",
-        },
-    )
-    .branch(generate_book_summary)
-    .branch(generate_book_target_audience)
-).next(generate_book_advertisement)
-```
-
 <table>
 <tr>
-<td> Sample state machine </td> <td> Sample output </td>
+<td> Sample chain </td> <td> Sample output </td>
 </tr>
 <tr>
 <td width="500px"><img src="docs/screenshots/parallel_chain.png" alt="Screenshot" /></td>
@@ -268,65 +521,159 @@ Join the Bennet sisters in their romantic adventures through balls, assemblies a
 </tr>
 </table>
 
-### Conditions
+<details>
 
-Model responses can influence the logic of a Step Functions state machine
-by using a [Choice state](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html).
-The model response can be compared to some other value, such as string equality or number comparisons,
-in order to determine which state to transition to next.
+<summary><b>Parallel chains with Step Functions</b></summary>
 
-In this example, the model is asked to determine whether the execution input is indeed a book,
-before generating a summary for it. The prompt instructs the model to answer "yes" or "no".
-If model's response is "yes", the state machine will transition to the prompt that generates
-the book summary. If the model's response is "no", the state machine will transition to a
-failure state.
+Parallel tasks can be configured as
+branches of a [Parallel state](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-parallel-state.html)
+in the state machine.
+In this example, the `generate_book_advertisement` task will receive as input a JSON object
+containing the model response from the `generate_book_summary` task as the `summary` value
+and the model response from the `generate_book_target_audience` task as the `audience` value.
 
 ```python
 from aws_cdk import aws_stepfunctions as sfn
 
-# Decide which state to transition to next, based on the model's response
-is_book_decision = (
-    sfn.Choice(self, "Is it a book?")
-    .when(
-        sfn.Condition.string_equals("$.Body.content[0].text", "yes"),
+chain = (
+    sfn.Parallel(
+        self,
+        "Parallel Tasks",
+        result_selector={
+            "summary.$": "$[0]",
+            "audience.$": "$[1]",
+        },
     )
-    .otherwise(sfn.Fail(self, "Input was not a book"))
-)
-
-# Prompt the model to determine whether the input is a book first
-chain = generate_is_book_response.next(is_book_decision)
+    .branch(generate_book_summary)
+    .branch(generate_book_target_audience)
+).next(generate_book_advertisement)
 ```
+
+See a full example of using this technique with Step Functions [here](techniques_step_functions/stacks/parallel_chain.py).
+</details>
+
+<details>
+
+<summary><b>Parallel chains with Bedrock Flows</b></summary>
+
+Parallel tasks can be configured by connecting the same input to two different nodes in the flow.
+Then, the output of those two nodes are both connected to a single node.
+In this example, the flow's input connects to both the `generate_book_summary` node and the
+`generate_book_summary` node, which run in parallel.
+The `generate_book_advertisement` node's input variables are
+`summary` (value provided by the output of the `generate_book_summary` node) and
+`audience` (value provided by the output of the `generate_book_target_audience` node).
+
+```python
+[
+    # Input -> Get Summary
+    bedrock.CfnFlow.FlowConnectionProperty(
+        name="_".join([input_node.name, generate_book_summary_node.name]),
+        type="Data",
+        source=input_node.name,
+        target=generate_book_summary_node.name,
+        configuration=bedrock.CfnFlow.FlowConnectionConfigurationProperty(
+            data=bedrock.CfnFlow.FlowDataConnectionConfigurationProperty(
+                source_output="document",
+                target_input="book",
+            ),
+        ),
+    ),
+    # Input -> Get Target Audience
+    bedrock.CfnFlow.FlowConnectionProperty(
+        name="_".join([input_node.name, generate_book_target_audience_node.name]),
+        type="Data",
+        source=input_node.name,
+        target=generate_book_target_audience_node.name,
+        configuration=bedrock.CfnFlow.FlowConnectionConfigurationProperty(
+            data=bedrock.CfnFlow.FlowDataConnectionConfigurationProperty(
+                source_output="document",
+                target_input="book",
+            ),
+        ),
+    ),
+    # Get Summary -> Write an Advertisement
+    bedrock.CfnFlow.FlowConnectionProperty(
+        name="_".join(
+            [generate_book_summary_node.name, generate_book_advertisement_node.name]
+        ),
+        type="Data",
+        source=generate_book_summary_node.name,
+        target=generate_book_advertisement_node.name,
+        configuration=bedrock.CfnFlow.FlowConnectionConfigurationProperty(
+            data=bedrock.CfnFlow.FlowDataConnectionConfigurationProperty(
+                source_output="modelCompletion",
+                target_input="summary",
+            ),
+        ),
+    ),
+    # Get Target Audience -> Write an Advertisement
+    bedrock.CfnFlow.FlowConnectionProperty(
+        name="_".join(
+            [generate_book_target_audience_node.name, generate_book_advertisement_node.name]
+        ),
+        type="Data",
+        source=generate_book_target_audience_node.name,
+        target=generate_book_advertisement_node.name,
+        configuration=bedrock.CfnFlow.FlowConnectionConfigurationProperty(
+            data=bedrock.CfnFlow.FlowDataConnectionConfigurationProperty(
+                source_output="modelCompletion",
+                target_input="audience",
+            ),
+        ),
+    ),
+    # Write an Advertisement -> Output
+    bedrock.CfnFlow.FlowConnectionProperty(
+        name="_".join([generate_book_advertisement_node.name, output_node.name]),
+        type="Data",
+        source=generate_book_advertisement_node.name,
+        target=output_node.name,
+        configuration=bedrock.CfnFlow.FlowConnectionConfigurationProperty(
+            data=bedrock.CfnFlow.FlowDataConnectionConfigurationProperty(
+                source_output="modelCompletion",
+                target_input="document",
+            ),
+        ),
+    ),
+]
+```
+
+See a full example of using this technique with Bedrock Flows [here](techniques_bedrock_flows/stacks/parallel_chain.py).
+</details>
+
+### Map chains
+
+Map chains iterate over a collection of inputs, processing each one and creating a new output for each item
+into a new list, similar to Python's map function.
+In a map chain, an array of items can be generated by a model through a prompt, or through some other means.
+Then, each item in the array can be injected into another prompt, one at a time, to generate another array of
+model responses. Finally, the array can be merged into a single prompt as additional context.
+
+In this example, the model first generates a list of books, which can be parsed into a JSON array.
+For each book in the array, a summary of that book is generated. Finally, the list of generated book
+summaries is fed into a prompt that generates an advertisement for a bookstore.
 
 <table>
 <tr>
-<td> Sample state machine </td> <td> Sample input </td> <td> Sample output </td>
+<td> Sample chain </td> <td> Sample output </td>
 </tr>
 <tr>
-<td width="450px"><img src="docs/screenshots/condition_chain.png" alt="Screenshot" /></td>
-<td>"Pride and Prejudice"</td>
+<td width="275px"><img src="docs/screenshots/map_chain.png" alt="Screenshot" /></td>
 <td>
-Here is a short 4 line advertisement for Pride & Prejudice:
-
-Jane Austen's beloved classic tale of romance and wit.
-
-Follow Elizabeth Bennet as her prejudice against the wealthy Mr. Darcy leads to humorous misunderstandings. Will pride and class division keep them apart or will their feelings overcome society's expectations?
-
-Immerse yourself in Regency-era England through Austen's timeless characters and sharp social commentary in this beloved story of love triumphing over judgment.
+Come discover stories of romance, intrigue, and social commentary at Acme Books! Immerse yourself in the lavish yet turbulent 1920s with The Great Gatsby. Uncover truths about love and class in Pride and Prejudice. Question government and humanity in 1984. Experience the injustice of racial tensions through a child's eyes in To Kill a Mockingbird. And journey into the disillusionment of adolescence with The Catcher in the Rye. We have these classic novels and more - come browse our expansive selection today!
 </td>
 </tr>
 </table>
 
-### Maps
+<details>
 
-Step Functions [Map states](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-map-state.html)
+<summary><b>Map chains in Step Functions</b></summary>
+
+[Map states](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-map-state.html)
 iterate over a collection of inputs, processing each one and creating a new output for each item.
-An array of items can be generated by a model through a prompt, or through some other means.
-Then, each item in the array can be injected into another prompt, one at a time, to generate another array of
-model responses. Finally, the array can be merged into a single prompt as additional context.
+The `generate_bookstore_advertisement` task in the state machine below will receive an array of `generate_book_summary`
+outputs as its input.
 
-In this example, the model first generates a list of books, which can be parse into a JSON array.
-For each book in the array, a summary of that book is generated. Finally, the list of generated book
-summaries is fed into a prompt that generates an advertisement for a bookstore.
 ```python
 chain = (
     generate_books_list.next(convert_model_response_to_array)
@@ -345,26 +692,218 @@ chain = (
 )
 ```
 
+See a full example of using this technique with Step Functions [here](techniques_step_functions/stacks/map_chain.py).
+</details>
+
+<details>
+
+<summary><b>Map chains in Bedrock Flows</b></summary>
+
+Map chains are implemented in Bedrock Flows using
+[an Iterator node and a Collector node](https://docs.aws.amazon.com/bedrock/latest/userguide/flows-nodes.html#flows-nodes-logic).
+The Iterator node takes an array as input, and sends each array item through
+the nodes that are between the Iterator node and the Collector node in the flow.
+The Collector node receives a new array containing the output of each array item.
+
+In this flow's connections, the Iterator node connects to a Prompt node that
+generates a book summary for each book in the array.
+The Prompt node connects to a Collector node
+to collect the list of generated book summaries.
+
+```python
+# Books Iterator -> Get Summary
+bedrock.CfnFlow.FlowConnectionProperty(
+    name="Iterator_To_Get_Summary",
+    type="Data",
+    source=books_iterator_node.name,
+    target=generate_book_summary_node.name,
+    configuration=bedrock.CfnFlow.FlowConnectionConfigurationProperty(
+        data=bedrock.CfnFlow.FlowDataConnectionConfigurationProperty(
+            source_output="arrayItem",
+            target_input="book",
+        ),
+    ),
+),
+# Get Summary -> Books Collector
+bedrock.CfnFlow.FlowConnectionProperty(
+    name="Get_Summary_To_Iterator",
+    type="Data",
+    source=generate_book_summary_node.name,
+    target=books_collector_node.name,
+    configuration=bedrock.CfnFlow.FlowConnectionConfigurationProperty(
+        data=bedrock.CfnFlow.FlowDataConnectionConfigurationProperty(
+            source_output="modelCompletion",
+            target_input="arrayItem",
+        ),
+    ),
+),
+```
+
+See a full example of using this technique with Bedrock Flows [here](techniques_bedrock_flows/stacks/map_chain.py).
+</details>
+
+### Conditions
+
+Model responses can influence the logic of a prompt chain with conditions.
+The model response can be compared to some other value, such as string equality or number comparisons,
+in order to determine which step in the workflow to invoke next.
+
+In this example, the model is asked to validate whether the user's input is indeed a book,
+before generating a summary for it. The prompt instructs the model to answer "yes" or "no".
+If model's response is "yes", the chain will invoke the prompt that generates
+the book summary. If the model's response is "no", the chain will enter a failure state
+because of the invalid input.
+
 <table>
 <tr>
-<td> Sample state machine </td> <td> Sample output </td>
+<td> Sample chain </td> <td> Sample input </td> <td> Sample output </td>
 </tr>
 <tr>
-<td width="275px"><img src="docs/screenshots/map_chain.png" alt="Screenshot" /></td>
+<td width="450px"><img src="docs/screenshots/condition_chain.png" alt="Screenshot" /></td>
+<td>"Pride and Prejudice"</td>
 <td>
-Come discover stories of romance, intrigue, and social commentary at Acme Books! Immerse yourself in the lavish yet turbulent 1920s with The Great Gatsby. Uncover truths about love and class in Pride and Prejudice. Question government and humanity in 1984. Experience the injustice of racial tensions through a child's eyes in To Kill a Mockingbird. And journey into the disillusionment of adolescence with The Catcher in the Rye. We have these classic novels and more - come browse our expansive selection today!
+Here is a short 4 line advertisement for Pride & Prejudice:
+
+Jane Austen's beloved classic tale of romance and wit.
+
+Follow Elizabeth Bennet as her prejudice against the wealthy Mr. Darcy leads to humorous misunderstandings. Will pride and class division keep them apart or will their feelings overcome society's expectations?
+
+Immerse yourself in Regency-era England through Austen's timeless characters and sharp social commentary in this beloved story of love triumphing over judgment.
 </td>
 </tr>
 </table>
 
+<details>
+
+<summary><b>Conditions with Step Functions</b></summary>
+
+Conditions can be implemented using a
+[Choice state](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html).
+
+```python
+from aws_cdk import aws_stepfunctions as sfn
+
+# Decide which state to transition to next, based on the model's response
+is_book_decision = (
+    sfn.Choice(self, "Is it a book?")
+    .when(
+        sfn.Condition.string_equals("$.Body.content[0].text", "yes"),
+        generate_book_summary.next(generate_book_advertisement),
+    )
+    .otherwise(sfn.Fail(self, "Input was not a book"))
+)
+
+# Prompt the model to determine whether the input is a book first
+chain = generate_is_book_response.next(is_book_decision)
+```
+
+See a full example of using this technique with Step Functions [here](techniques_step_functions/stacks/conditional_chain.py).
+</details>
+
+<details>
+
+<summary><b>Conditions with Bedrock Flows</b></summary>
+
+Conditions can be implemented using a
+[Condition node](https://docs.aws.amazon.com/bedrock/latest/userguide/flows-nodes.html#flows-nodes-logic).
+
+In the example below, the result of the condition will be "yes" if the model validated that the
+input is a book.  Otherwise, the result will be "default".
+
+```python
+validate_input_condition_node = bedrock.CfnFlow.FlowNodeProperty(
+    name="Validate_Input_Condition",
+    type="Condition",
+    configuration=bedrock.CfnFlow.FlowNodeConfigurationProperty(
+        condition=bedrock.CfnFlow.ConditionFlowNodeConfigurationProperty(
+            conditions=[
+                bedrock.CfnFlow.FlowConditionProperty(
+                    name="yes", expression='validationResult == "yes"'
+                ),
+                bedrock.CfnFlow.FlowConditionProperty(name="default"),
+            ]
+        )
+    ),
+    inputs=[
+        bedrock.CfnFlow.FlowNodeInputProperty(
+            name="validationResult",
+            type="String",
+            expression="$.data",
+        )
+    ],
+)
+```
+
+In the flow's connections, connect the "yes" condition result to the `generate_book_summary`
+node.  Connect the "default" condition result to an output that indicates input validation failure.
+
+```python
+# Validate Input Condition -> Invalid Input
+bedrock.CfnFlow.FlowConnectionProperty(
+    name="Input_Condition_To_Invalid_Input",
+    type="Conditional",
+    source=validate_input_condition_node.name,
+    target=invalid_input_node.name,
+    configuration=bedrock.CfnFlow.FlowConnectionConfigurationProperty(
+        conditional=bedrock.CfnFlow.FlowConditionalConnectionConfigurationProperty(
+            condition="default"
+        )
+    ),
+),
+# Validate Input Condition -> Get Summary
+bedrock.CfnFlow.FlowConnectionProperty(
+    name="Input_Condition_To_Generate_Book_Summary",
+    type="Conditional",
+    source=validate_input_condition_node.name,
+    target=generate_book_summary_node.name,
+    configuration=bedrock.CfnFlow.FlowConnectionConfigurationProperty(
+        conditional=bedrock.CfnFlow.FlowConditionalConnectionConfigurationProperty(
+            condition="yes"
+        )
+    ),
+),
+```
+
+See a full example of using this technique with Bedrock Flows [here](techniques_bedrock_flows/stacks/conditional_chain.py).
+</details>
+
 ### Chain prompts and other AWS services
 
-Step Functions supports calling over 220 AWS services from a state machine, which can be
-chained with prompts to a model in Bedrock. Additional context for a prompt can be retrieved
-from S3 or DynamoDB. Or, a model's response can be sent on to other AWS services like SNS
-or SQS, or it can be processed with custom code in a Lambda function.
+Chaining prompts with calls to AWS services in a single chain makes it possible
+to build more capable generative AI applications.
+For example, you can add custom code to the chain by adding a Lambda function
+to the workflow.
+You can also retrieve additional context for a prompt from any AWS storage or
+database service, such as Bedrock knowledge bases, S3, or DynamoDB, as part of the chain.
+Or, a model's response can be sent on to other AWS services like SNS
+or SQS in the chain.
 
 In this example, the model's response is sent as a message to an SNS topic.
+<table>
+<tr>
+<td> Sample chain </td> <td> Sample input </td> <td> Sample SNS topic message </td>
+</tr>
+<tr>
+<td width="250px"><img src="docs/screenshots/aws_service_invocation.png" alt="Screenshot" /></td>
+<td>"Pride and Prejudice"</td>
+<td>
+"summary": "Here is a one sentence summary of Pride and Prejudice by Jane Austen:\nIt follows the romance between Elizabeth Bennet, the clever second daughter of a gentleman farmer, and Fitzwilliam Darcy, a wealthy aristocrat, as prejudices arising from their social differences are overcome through their developing affection and respect for each other."
+</br> </br>
+"book": "Pride and Prejudice"
+</td>
+</tr>
+</table>
+
+<details>
+
+<summary><b>AWS service chains with Step Functions</b></summary>
+
+Step Functions supports calling
+[over 220 AWS services](https://docs.aws.amazon.com/step-functions/latest/dg/integrate-services.html)
+from a state machine, which can be chained with steps that invoke a model in Bedrock.
+This example uses Step Function's support for publishing a message to SNS
+directly from the state machine.
+
 ```python
 from aws_cdk import (
     aws_sns as sns,
@@ -396,65 +935,63 @@ notify_me = tasks.SnsPublish(
 chain = generate_book_summary.next(notify_me)
 ```
 
-<table>
-<tr>
-<td> Sample state machine </td> <td> Sample input </td> <td> Sample SNS topic message </td>
-</tr>
-<tr>
-<td width="250px"><img src="docs/screenshots/aws_service_invocation.png" alt="Screenshot" /></td>
-<td>"Pride and Prejudice"</td>
-<td>
-"summary": "Here is a one sentence summary of Pride and Prejudice by Jane Austen:\nIt follows the romance between Elizabeth Bennet, the clever second daughter of a gentleman farmer, and Fitzwilliam Darcy, a wealthy aristocrat, as prejudices arising from their social differences are overcome through their developing affection and respect for each other."
-</br> </br>
-"book": "Pride and Prejudice"
-</td>
-</tr>
-</table>
+See a full example of using this technique with Step Functions [here](techniques_step_functions/stacks/aws_service_invocation.py).
+</details>
 
-### Validate output and re-prompt
+<details>
+
+<summary><b>AWS service chains with Bedrock Flows</b></summary>
+
+Bedrock Flows supports a limited number of
+[direct AWS service integrations](https://docs.aws.amazon.com/bedrock/latest/userguide/flows-nodes.html#flows-nodes-data),
+including Bedrock agents, Bedrock knowledge bases, S3, Lambda, and Lex.
+To add other AWS services to a flow, you will need to write a Lambda function
+that calls the AWS service API you need.
+Then, add a Lambda function node to the flow to invoke that function.
+
+```python
+bedrock.CfnFlow.FlowNodeProperty(
+    name="Publish_To_Sns_Topic",
+    type="LambdaFunction",
+    configuration=bedrock.CfnFlow.FlowNodeConfigurationProperty(
+        lambda_function=bedrock.CfnFlow.LambdaFunctionFlowNodeConfigurationProperty(
+            lambda_arn=sns_publish_message_lambda.function_arn,
+        ),
+    ),
+    inputs=[
+        bedrock.CfnFlow.FlowNodeInputProperty(
+            name="input",
+            type="String",
+            expression="$.data",
+        )
+    ],
+    outputs=[
+        bedrock.CfnFlow.FlowNodeOutputProperty(
+            name="functionResponse",
+            type="String",
+        )
+    ],
+)
+```
+
+The Bedrock Flows condition example [here](techniques_bedrock_flows/stacks/conditional_chain.py)
+contains an example of invoking a Lambda function as part of a flow.
+</details>
+
+### Handle failures in chains
 
 When a particular format is required for the model response (such as JSON array),
 the model may occasionally fail to comply with all instructions about the desired format.
 To improve the likelihood of success, the model can be re-prompted to fix its own
 response to comply with the desired format.
-Step Functions [Catch fields](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-handling-failure-using-catch) can be used to prompt the model
-to fix its response.
 
-In this example, the model response is validated against a strict JSON schema, using
-custom code in a Lambda function. If the JSON validation throws an exception, the error
-is caught by the state machine and it transitions to a task that prompts the model
-to fix the JSON validation error. If the fixed output passes JSON validation, the
-execution succeeds. If not, the model is prompted against to fix its response.
-To prevent an infinite loop, a counter is incremented each time the model is prompted
-to fix the response. The execution fails if the counter passes a threshold.
-```python
-from aws_cdk import aws_stepfunctions as sfn
-
-# Only try to fix the JSON a few times, then give up and fail
-attempt_to_fix_json = handle_parsing_error.next(
-    sfn.Choice(self, "Too many attempts to fix model response?")
-    .when(
-        sfn.Condition.number_less_than("$.error_state.parse_error_count", 3),
-        fix_json.next(parse_model_response),
-    )
-    .otherwise(sfn.Fail(self, "Fail - too many attempts"))
-)
-
-# If the JSON validation throws an exception, catch it and re-prompt the model
-parse_model_response.add_catch(
-    handler=attempt_to_fix_json,
-    errors=[sfn.Errors.TASKS_FAILED],
-    result_path="$.caught_error",
-)
-
-chain = generate_books_list.next(initialize_parse_attempt_counter).next(
-    parse_model_response
-)
-```
+In this example, if parsing the model response against a JSON schema fails,
+then the model is prompted to fix the response to comply with the schema.
+If the model cannot fix the JSON within three attempts, the workflow fails.
 
 <table>
 <tr>
-<td> Sample state machine </td> <td> Sample output </td>
+<td> Sample chain </td> <td> Sample output </td>
 </tr>
 <tr>
 <td width="390px"><img src="docs/screenshots/validation.png" alt="Screenshot" /></td>
@@ -490,21 +1027,102 @@ chain = generate_books_list.next(initialize_parse_attempt_counter).next(
 </tr>
 </table>
 
+<details>
+
+<summary><b>Failure handling chains with Step Functions</b></summary>
+
+You can use [Catch fields](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-handling-failure-using-catch)
+to handle failures of individual tasks in the state machine.
+
+In this example, the model response is validated against a strict JSON schema, using
+custom code in a Lambda function. If the JSON validation throws an exception, the error
+is caught by the state machine and it transitions to a task that prompts the model
+to fix the JSON validation error. If the fixed output passes JSON validation, the
+execution succeeds. If not, the model is prompted against to fix its response.
+To prevent an infinite loop, a counter is incremented each time the model is prompted
+to fix the response. The execution fails if the counter passes a threshold.
+
+```python
+from aws_cdk import aws_stepfunctions as sfn
+
+# Only try to fix the JSON a few times, then give up and fail
+attempt_to_fix_json = handle_parsing_error.next(
+    sfn.Choice(self, "Too many attempts to fix model response?")
+    .when(
+        sfn.Condition.number_less_than("$.error_state.parse_error_count", 3),
+        fix_json.next(parse_model_response),
+    )
+    .otherwise(sfn.Fail(self, "Fail - too many attempts"))
+)
+
+# If the JSON validation throws an exception, catch it and re-prompt the model
+parse_model_response.add_catch(
+    handler=attempt_to_fix_json,
+    errors=[sfn.Errors.TASKS_FAILED],
+    result_path="$.caught_error",
+)
+
+chain = generate_books_list.next(initialize_parse_attempt_counter).next(
+    parse_model_response
+)
+```
+
+See a full example of using this technique with Step Functions [here](techniques_step_functions/stacks/validation_chain.py).
+</details>
+
+<details>
+
+<summary><b>Failure handling chains with Bedrock Flows</b></summary>
+
+Compared to the Step Functions solution,
+Bedrock Flows does not support catching errors in the flow.
+For example, if a Lambda function that validates the model's response
+throws an exception on failure to parse, the flow will fail.
+Your function would need to return a special response for parsing failure,
+which can be handled by a Condition node (see the Condition section).
+</details>
+
 ### Wait for human input
 
-In some cases, a complex generative AI task requires human input before continuing
-further steps in that complex task. Step Functions supports asynchronous processing
-during state machine executions through [callbacks with a task token](https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-wait-token).
+In some cases, a complex generative AI task requires human input before continuing to
+further steps in that complex workflow.
+In this example, the human is asked to approve a generated advertisement, with the decision
+of "yes" or "no". If the generated ad is not approved by the human,
+the model will be invoked again to generate a new ad,
+requiring human input again to approve the new ad.
 
+<table>
+<tr>
+<td> Sample chain </td> <td> Sample input </td> <td> Sample output </td>
+</tr>
+<tr>
+<td width="495px"><img src="docs/screenshots/human_input.png" alt="Screenshot" /></td>
+<td>"Pride and Prejudice"</td>
+<td>
+Here is a draft 150-word advertisement for Pride and Prejudice by Jane Austen:
+
+Tales of love, manners, and misunderstanding in Regency-era England
+<br/><br/>
+Pride and prejudice collide in Jane Austen's beloved romantic classic. Follow the spirited Elizabeth Bennet and her sisters as they navigate the balls and social events of 19th century British high society in their pursuit of marriage and love. Full of wit, Mrs. Bennet's constant efforts to marry off her daughters provide much comic relief. But at the center is the pride of Mr. Darcy and Elizabeth's prejudice against him, as both struggle against their initial impressions and find their feelings growing deeper. Austen crafts a timeless story of the challenges for women and men seeking partners, and the obstacles of class and social pressures. Immerse yourself in Austen's rich comedy of manners, keen social commentary, and the development of one of literature's most romantic couples. Join the Bennet family in their memorable adventures in this prose gem that has charmed readers for over 200 years.
+</td>
+</tr>
+</table>
+
+<details>
+
+<summary><b>Human input chains with Step Functions</b></summary>
+
+Step Functions supports asynchronous processing
+during state machine executions through
+[callbacks with a task token](https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-wait-token).
 Where human input is required, the state machine can send a task token to some system
 that will notify a human that their input is required. When the human has provided their
 input, the system should send the input value and the task token value to Step Functions,
 so that the state machine execution can continue.
 
-In this example, the human is asked to approve a generated advertisement, with the decision
-of "yes" or "no". If the generated ad is not approved, the model will be invoked again to
-generate a new ad, requiring human input again to approve the new ad. The task token
-is sent in a message to an SNS topic when human input is required in the state machine.
+In this example, the task token is sent in a message to an SNS topic
+when human input is required in the state machine.
+
 ```python
 topic = sns.Topic(
     self, "Topic", display_name="Advertisements that need approval"
@@ -525,6 +1143,7 @@ publish_ad_for_approval = tasks.SnsPublish(
 ```
 
 A Choice state determines the next state based on the response from the human.
+
 ```python
 handle_user_decision = (
     sfn.Choice(self, "Is Advertisement Approved?")
@@ -536,7 +1155,7 @@ handle_user_decision = (
     .when(
         # Human rejected the ad - loop back to generate a new ad
         sfn.Condition.string_equals("$.human_input.decision", "no"),
-        get_advertisement,
+        generate_advertisement,
     )
     .otherwise(
         sfn.Fail(
@@ -553,27 +1172,24 @@ chain = generate_advertisement.next(publish_ad_for_approval).next(
 )
 ```
 
-<table>
-<tr>
-<td> Sample state machine </td> <td> Sample input </td> <td> Sample SNS topic message </td>
-</tr>
-<tr>
-<td width="495px"><img src="docs/screenshots/human_input.png" alt="Screenshot" /></td>
-<td>"Pride and Prejudice"</td>
-<td>
-Here is a draft 150-word advertisement for Pride and Prejudice by Jane Austen:
+See a full example of using this technique with Step Functions [here](techniques_step_functions/stacks/human_input_chain.py).
+</details>
 
-Tales of love, manners, and misunderstanding in Regency-era England
-<br/><br/>
-Pride and prejudice collide in Jane Austen's beloved romantic classic. Follow the spirited Elizabeth Bennet and her sisters as they navigate the balls and social events of 19th century British high society in their pursuit of marriage and love. Full of wit, Mrs. Bennet's constant efforts to marry off her daughters provide much comic relief. But at the center is the pride of Mr. Darcy and Elizabeth's prejudice against him, as both struggle against their initial impressions and find their feelings growing deeper. Austen crafts a timeless story of the challenges for women and men seeking partners, and the obstacles of class and social pressures. Immerse yourself in Austen's rich comedy of manners, keen social commentary, and the development of one of literature's most romantic couples. Join the Bennet family in their memorable adventures in this prose gem that has charmed readers for over 200 years.
-</td>
-</tr>
-</table>
+<details>
 
-## Prompt chaining examples
+<summary><b>Human input chains with Bedrock Flows</b></summary>
+
+Compared to the Step Functions solution,
+Bedrock Flows does not support pausing the flow to wait for human input.
+You would need to orchestrate custom logic outside of Bedrock Flows
+that waits for human input and invokes a new flow when human input is available.
+</details>
+
+## Prompt chaining applications
 
 This repository contains several working examples of using the prompt chaining techniques described above,
-as part of a demo generative AI application. The [Streamlit-based](https://streamlit.io/) demo application
+as part of a demo generative AI application that uses Step Functions for prompt chaining.
+The [Streamlit-based](https://streamlit.io/) demo application
 executes each example's Step Functions state machine and displays the results,
 including the content generated by foundation models in Bedrock.
 The Step Functions state machines are defined using [AWS CDK](https://aws.amazon.com/cdk/) in Python.
@@ -722,7 +1338,7 @@ CDK code for Langchain version: [stacks/most_popular_repo_langchain_stack.py](st
 
 ## Deploy the examples
 
-See the [development guide](DEVELOP.md) for instructions on how to deploy the demo application.
+See the [development guide](DEVELOP.md) for instructions on how to deploy the demo application and the technique examples.
 
 ## Security
 
