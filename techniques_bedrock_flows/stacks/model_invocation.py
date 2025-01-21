@@ -82,7 +82,7 @@ class FlowsModelInvocation(Stack):
             inputs=[
                 # This input will be ignored, because the prompt is not templated
                 bedrock.CfnFlow.FlowNodeInputProperty(
-                    name="ignore",
+                    name="input",
                     type="String",
                     expression="$.data",
                 )

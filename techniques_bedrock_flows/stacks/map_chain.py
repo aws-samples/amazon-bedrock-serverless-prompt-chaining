@@ -244,7 +244,7 @@ Do not include any other content other than the JSON object in your response. Do
             inputs=[
                 # This input will be ignored, because the prompt is not templated
                 bedrock.CfnFlow.FlowNodeInputProperty(
-                    name="ignore",
+                    name="input",
                     type="String",
                     expression="$.data",
                 )
