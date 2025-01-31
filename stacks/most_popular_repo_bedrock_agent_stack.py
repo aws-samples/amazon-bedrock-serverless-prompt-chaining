@@ -50,7 +50,7 @@ class MostPopularRepoBedrockAgentStack(Stack):
             self,
             "GitHubAgentActions",
             function_name="PromptChainDemo-MostPopularRepoBedrockAgents-GitHubActions",
-            runtime=lambda_.Runtime.PYTHON_3_9,
+            runtime=lambda_.Runtime.PYTHON_3_13,
             entry="functions/most_popular_repo_bedrock_agent/github_agent_actions",
             timeout=Duration.seconds(20),
             memory_size=512,
@@ -146,7 +146,7 @@ class MostPopularRepoBedrockAgentStack(Stack):
         lookup_repo_lambda = lambda_python.PythonFunction(
             self,
             "LookupRepoAgent",
-            runtime=lambda_.Runtime.PYTHON_3_9,
+            runtime=lambda_.Runtime.PYTHON_3_13,
             entry="functions/most_popular_repo_bedrock_agent/agent",
             handler="lookup_trending_repo_agent",
             bundling=lambda_python.BundlingOptions(
@@ -172,7 +172,7 @@ class MostPopularRepoBedrockAgentStack(Stack):
         summarize_repo_lambda = lambda_python.PythonFunction(
             self,
             "SummarizeRepoAgent",
-            runtime=lambda_.Runtime.PYTHON_3_9,
+            runtime=lambda_.Runtime.PYTHON_3_13,
             entry="functions/most_popular_repo_bedrock_agent/agent",
             handler="summarize_repo_readme_agent",
             bundling=lambda_python.BundlingOptions(

@@ -274,7 +274,7 @@ def get_json_response_parser_step(
     parser_lambda = lambda_python.PythonFunction(
         scope,
         "".join(id.split()) + "Function",
-        runtime=lambda_.Runtime.PYTHON_3_9,
+        runtime=lambda_.Runtime.PYTHON_3_13,
         entry="functions/generic/parse_json_response",
         memory_size=256,
     )

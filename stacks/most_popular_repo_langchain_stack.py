@@ -23,7 +23,7 @@ class MostPopularRepoLangchainStack(Stack):
         lookup_repo_lambda = lambda_python.PythonFunction(
             self,
             "LookupRepoAgent",
-            runtime=lambda_.Runtime.PYTHON_3_9,
+            runtime=lambda_.Runtime.PYTHON_3_13,
             entry="functions/most_popular_repo_langchain",
             handler="lookup_trending_repo_agent",
             bundling=get_lambda_bundling_options(),
@@ -45,7 +45,7 @@ class MostPopularRepoLangchainStack(Stack):
         summarize_repo_lambda = lambda_python.PythonFunction(
             self,
             "SummarizeRepoAgent",
-            runtime=lambda_.Runtime.PYTHON_3_9,
+            runtime=lambda_.Runtime.PYTHON_3_13,
             entry="functions/most_popular_repo_langchain",
             handler="summarize_repo_readme_agent",
             bundling=get_lambda_bundling_options(),

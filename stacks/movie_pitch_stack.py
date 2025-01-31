@@ -142,7 +142,7 @@ Screenwriters previously pitched you on {len(temperature_settings)} movie ideas,
         user_choice_lambda = lambda_python.PythonFunction(
             self,
             "UserProducerChoiceAgent",
-            runtime=lambda_.Runtime.PYTHON_3_9,
+            runtime=lambda_.Runtime.PYTHON_3_13,
             entry="functions/generic/seek_user_input",
             timeout=Duration.seconds(5),
             memory_size=128,

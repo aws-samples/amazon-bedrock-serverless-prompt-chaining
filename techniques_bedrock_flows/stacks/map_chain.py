@@ -209,7 +209,7 @@ Do not include any other content other than the JSON object in your response. Do
         book_array_json_parser_lambda = lambda_python.PythonFunction(
             self,
             "ParseJsonFunction",
-            runtime=lambda_.Runtime.PYTHON_3_9,
+            runtime=lambda_.Runtime.PYTHON_3_13,
             entry="functions/parse_json_response",
             memory_size=256,
             environment={

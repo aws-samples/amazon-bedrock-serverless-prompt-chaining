@@ -334,7 +334,7 @@ Do not include any other content other than the JSON object in your response. Do
         meal_choose_winner_lambda = lambda_python.PythonFunction(
             self,
             "MealChooseAgent",
-            runtime=lambda_.Runtime.PYTHON_3_9,
+            runtime=lambda_.Runtime.PYTHON_3_13,
             entry="functions/meal_planner/meal_choose_winner_agent",
             bundling=get_lambda_bundling_options(),
             timeout=Duration.minutes(1),

@@ -85,7 +85,7 @@ Do not include any other content other than the JSON object in your response. Do
         merge_character_stories_lambda = lambda_python.PythonFunction(
             self,
             "MergeCharacterStoriesAgent",
-            runtime=lambda_.Runtime.PYTHON_3_9,
+            runtime=lambda_.Runtime.PYTHON_3_13,
             entry="functions/generic/merge_map_output",
             memory_size=256,
         )
