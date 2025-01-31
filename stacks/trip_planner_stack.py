@@ -136,7 +136,7 @@ The itinerary should be formatted in Markdown format.""",
         pdf_lambda = lambda_python.PythonFunction(
             self,
             "PdfCreator",
-            runtime=lambda_.Runtime.PYTHON_3_8,  # This must be Python 3.8 for the Weasyprint layer
+            runtime=lambda_.Runtime.PYTHON_3_12,  # This must be Python 3.12 for the Weasyprint layer
             entry="functions/trip_planner/pdf_creator",
             bundling=get_lambda_bundling_options(),
             environment={
