@@ -101,17 +101,13 @@ aws secretsmanager create-secret \
 
 Set up a Weasyprint Lambda layer in your account. One of the examples in the demo application uses this library to generate PDF files.
 ```
-git clone https://github.com/kotify/cloud-print-utils.git
-
-cd cloud-print-utils
-
-make build/weasyprint-layer-python3.12.zip
+wget https://github.com/kotify/cloud-print-utils/releases/download/weasyprint-63.0/weasyprint-layer-python3.13.zip
 
 aws lambda publish-layer-version \
     --region us-west-2 \
     --layer-name weasyprint \
-    --zip-file fileb://build/weasyprint-layer-python3.12.zip \
-    --compatible-runtimes "python3.12" \
+    --zip-file fileb://weasyprint-layer-python3.13.zip \
+    --compatible-runtimes "python3.13" \
     --license-info "MIT" \
     --description "fonts and libs required by weasyprint"
 
