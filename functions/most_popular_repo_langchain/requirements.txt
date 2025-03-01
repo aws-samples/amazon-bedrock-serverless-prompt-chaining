@@ -1,5 +1,5 @@
 langchain==0.3.19
-langchain-community==0.3.16
+langchain-community==0.3.18
 requests==2.32.3
 PyGithub==2.6.1
 boto3==1.37.4
