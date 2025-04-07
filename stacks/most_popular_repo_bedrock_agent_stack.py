@@ -52,7 +52,7 @@ class MostPopularRepoBedrockAgentStack(Stack):
             function_name="PromptChainDemo-MostPopularRepoBedrockAgents-GitHubActions",
             runtime=lambda_.Runtime.PYTHON_3_13,
             entry="functions/most_popular_repo_bedrock_agent/github_agent_actions",
-            timeout=Duration.seconds(20),
+            timeout=Duration.seconds(30),
             memory_size=512,
             environment={"GITHUB_TOKEN_SECRET": github_secret.secret_name},
         )

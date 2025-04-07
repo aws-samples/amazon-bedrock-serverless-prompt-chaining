@@ -3,7 +3,12 @@ import os
 import re
 import uuid
 
-bedrock_agent_client = boto3.client("bedrock-agent-runtime")
+from botocore.config import Config
+
+bedrock_agent_client = boto3.client(
+    "bedrock-agent-runtime",
+    config=Config(retries={"max_attempts": 6, "mode": "standard"}),
+)
 
 agent_id = os.environ.get("BEDROCK_AGENT_ID")
 agent_alias_id = os.environ.get("BEDROCK_AGENT_ALIAS_ID")
