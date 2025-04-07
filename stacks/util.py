@@ -43,8 +43,7 @@ def get_bedrock_iam_policy_statement():
             "bedrock:InvokeModel",
         ],
         resources=[
-            "arn:aws:bedrock:*::foundation-model/anthropic.claude-instant-v1",
-            "arn:aws:bedrock:*::foundation-model/anthropic.claude-v2",
+            "arn:aws:bedrock:*::foundation-model/anthropic.claude-*",
         ],
     )
 

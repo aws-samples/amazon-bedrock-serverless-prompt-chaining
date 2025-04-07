@@ -16,16 +16,17 @@ according to a set of defined rules.
 
 This repository shows how to implement prompt chaining with either of these two AWS services,
 depending on your needs and preferences:
+
 1. **[AWS Step Functions](https://aws.amazon.com/step-functions/)**:
-Step Functions can orchestrate complex workflows and invoke foundation models in Bedrock.
-Beyond simple ordered chains of prompts, Step Functions state machines can contain loops, map jobs, parallel jobs,
-conditions, and input/output manipulation. State machines can also chain together steps that invoke a foundation model in Bedrock,
-steps that invoke custom code in AWS Lambda functions, and steps that interact with over 220 AWS services.
+   Step Functions can orchestrate complex workflows and invoke foundation models in Bedrock.
+   Beyond simple ordered chains of prompts, Step Functions state machines can contain loops, map jobs, parallel jobs,
+   conditions, and input/output manipulation. State machines can also chain together steps that invoke a foundation model in Bedrock,
+   steps that invoke custom code in AWS Lambda functions, and steps that interact with over 220 AWS services.
 2. **[Amazon Bedrock Flows](https://aws.amazon.com/bedrock/flows/)**:
-Bedrock Flows is purpose-built for building generative AI workflows with Bedrock.
-Flows can iterate over arrays, invoke tasks in parallel, and define conditions for workflow logic.
-Flows can chain together steps that invoke a model in Bedrock, invoke a Bedrock agent, and
-retrieve data from a Bedrock knowledge base. Flows can also interact with S3, Lambda, and Lex.
+   Bedrock Flows is purpose-built for building generative AI workflows with Bedrock.
+   Flows can iterate over arrays, invoke tasks in parallel, and define conditions for workflow logic.
+   Flows can chain together steps that invoke a model in Bedrock, invoke a Bedrock agent, and
+   retrieve data from a Bedrock knowledge base. Flows can also interact with S3, Lambda, and Lex.
 
 These services (Bedrock, Bedrock Flows, and Step Functions) are all serverless,
 so you don't need to manage any infrastructure to deploy and scale up your application.
@@ -33,22 +34,22 @@ so you don't need to manage any infrastructure to deploy and scale up your appli
 <!-- toc -->
 
 1. [Prompt chaining techniques](#prompt-chaining-techniques)
-    1. [Model invocation](#model-invocation)
-    1. [Prompt templating](#prompt-templating)
-    1. [Sequential chains](#sequential-chains)
-    1. [Parallel chains](#parallel-chains)
-    1. [Map chains](#map-chains)
-    1. [Conditions](#conditions)
-    1. [Chain prompts and other AWS services](#chain-prompts-and-other-aws-services)
-    1. [Handle failures in chains](#handle-failures-in-chains)
-    1. [Wait for human input](#wait-for-human-input)
+   1. [Model invocation](#model-invocation)
+   1. [Prompt templating](#prompt-templating)
+   1. [Sequential chains](#sequential-chains)
+   1. [Parallel chains](#parallel-chains)
+   1. [Map chains](#map-chains)
+   1. [Conditions](#conditions)
+   1. [Chain prompts and other AWS services](#chain-prompts-and-other-aws-services)
+   1. [Handle failures in chains](#handle-failures-in-chains)
+   1. [Wait for human input](#wait-for-human-input)
 1. [Prompt chaining applications](#prompt-chaining-applications)
-    1. [Write a blog post](#write-a-blog-post)
-    1. [Write a story](#write-a-story)
-    1. [Plan a trip](#plan-a-trip)
-    1. [Pitch a movie idea](#pitch-a-movie-idea)
-    1. [Plan a meal](#plan-a-meal)
-    1. [Describe the most popular open source repo today](#describe-the-most-popular-open-source-repo-today)
+   1. [Write a blog post](#write-a-blog-post)
+   1. [Write a story](#write-a-story)
+   1. [Plan a trip](#plan-a-trip)
+   1. [Pitch a movie idea](#pitch-a-movie-idea)
+   1. [Plan a meal](#plan-a-meal)
+   1. [Describe the most popular open source repo today](#describe-the-most-popular-open-source-repo-today)
 1. [Deploy the examples](#deploy-the-examples)
 1. [Security](#security)
 1. [License](#license)
@@ -78,6 +79,7 @@ The story follows the romantic lives and relationships between the Bennet family
 daughters and the eligible gentlemen of the neighborhood, most significantly the
 love story between Elizabeth Bennet and Mr. Darcy that develops despite their
 initial prejudices against each other.
+
 </td>
 </tr>
 </table>
@@ -133,6 +135,7 @@ tasks.BedrockInvokeModel(
 ```
 
 See a full example of using this technique with Step Functions [here](techniques_step_functions/stacks/model_invocation.py).
+
 </details>
 
 <details>
@@ -220,6 +223,7 @@ generate_book_summary_node = bedrock.CfnFlow.FlowNodeProperty(
 ```
 
 See a full example of using this technique with Bedrock Flows [here](techniques_bedrock_flows/stacks/model_invocation.py).
+
 </details>
 
 ### Prompt templating
@@ -239,6 +243,7 @@ Here is a one sentence summary of Pride and Prejudice by Jane Austen:
 Pride and Prejudice follows the romantic scrapes of Elizabeth Bennet
 and Fitzwilliam Darcy as they engage in a battle of wit and
 misunderstandings before ultimately falling in love.
+
 </td>
 </tr>
 </table>
@@ -265,6 +270,7 @@ from aws_cdk import aws_stepfunctions as sfn
 ```
 
 See a full example of using this technique with Step Functions [here](techniques_step_functions/stacks/prompt_templating.py).
+
 </details>
 
 <details>
@@ -317,6 +323,7 @@ bedrock.CfnFlow.FlowConnectionProperty(
 ```
 
 See a full example of using this technique with Bedrock Flows [here](techniques_bedrock_flows/stacks/prompt_templating.py).
+
 </details>
 
 ### Sequential chains
@@ -362,6 +369,7 @@ Define the first prompt:
 
 Use Step Functions intrinsic functions to inject the first prompt's output into
 the second prompt's context.
+
 ```python
 "messages": [
     {
@@ -393,11 +401,13 @@ the second prompt's context.
 ```
 
 The first prompt can then be chained to a second prompt in the state machine:
+
 ```python
 chain = generate_book_summary.next(generate_book_advertisement)
 ```
 
 See a full example of using this technique with Step Functions [here](techniques_step_functions/stacks/sequential_chain.py).
+
 </details>
 
 <details>
@@ -493,6 +503,7 @@ bedrock.CfnFlow.FlowConnectionProperty(
 ```
 
 See a full example of using this technique with Bedrock Flows [here](techniques_bedrock_flows/stacks/sequential_chain.py).
+
 </details>
 
 ### Parallel chains
@@ -517,6 +528,7 @@ Full of wit and social insight, Austen draws you into the world of manners and m
 With marriage plots that entangle and hearts that misunderstand, Pride & Prejudice is a page-turning delight. It offers charming insights into love and class that women of fashion will find most diverting and relatable.
 
 Join the Bennet sisters in their romantic adventures through balls, assemblies and country walks. With humor, feeling and social insight, Pride & Prejudice is this season's must-read for ladies seeking laughter, learning and happily-ever-after.
+
 </td>
 </tr>
 </table>
@@ -550,6 +562,7 @@ chain = (
 ```
 
 See a full example of using this technique with Step Functions [here](techniques_step_functions/stacks/parallel_chain.py).
+
 </details>
 
 <details>
@@ -639,6 +652,7 @@ The `generate_book_advertisement` node's input variables are
 ```
 
 See a full example of using this technique with Bedrock Flows [here](techniques_bedrock_flows/stacks/parallel_chain.py).
+
 </details>
 
 ### Map chains
@@ -693,6 +707,7 @@ chain = (
 ```
 
 See a full example of using this technique with Step Functions [here](techniques_step_functions/stacks/map_chain.py).
+
 </details>
 
 <details>
@@ -740,6 +755,7 @@ bedrock.CfnFlow.FlowConnectionProperty(
 ```
 
 See a full example of using this technique with Bedrock Flows [here](techniques_bedrock_flows/stacks/map_chain.py).
+
 </details>
 
 ### Conditions
@@ -769,6 +785,7 @@ Jane Austen's beloved classic tale of romance and wit.
 Follow Elizabeth Bennet as her prejudice against the wealthy Mr. Darcy leads to humorous misunderstandings. Will pride and class division keep them apart or will their feelings overcome society's expectations?
 
 Immerse yourself in Regency-era England through Austen's timeless characters and sharp social commentary in this beloved story of love triumphing over judgment.
+
 </td>
 </tr>
 </table>
@@ -798,6 +815,7 @@ chain = generate_is_book_response.next(is_book_decision)
 ```
 
 See a full example of using this technique with Step Functions [here](techniques_step_functions/stacks/conditional_chain.py).
+
 </details>
 
 <details>
@@ -808,7 +826,7 @@ Conditions can be implemented using a
 [Condition node](https://docs.aws.amazon.com/bedrock/latest/userguide/flows-nodes.html#flows-nodes-logic).
 
 In the example below, the result of the condition will be "yes" if the model validated that the
-input is a book.  Otherwise, the result will be "default".
+input is a book. Otherwise, the result will be "default".
 
 ```python
 validate_input_condition_node = bedrock.CfnFlow.FlowNodeProperty(
@@ -835,7 +853,7 @@ validate_input_condition_node = bedrock.CfnFlow.FlowNodeProperty(
 ```
 
 In the flow's connections, connect the "yes" condition result to the `generate_book_summary`
-node.  Connect the "default" condition result to an output that indicates input validation failure.
+node. Connect the "default" condition result to an output that indicates input validation failure.
 
 ```python
 # Validate Input Condition -> Invalid Input
@@ -865,6 +883,7 @@ bedrock.CfnFlow.FlowConnectionProperty(
 ```
 
 See a full example of using this technique with Bedrock Flows [here](techniques_bedrock_flows/stacks/conditional_chain.py).
+
 </details>
 
 ### Chain prompts and other AWS services
@@ -879,6 +898,7 @@ Or, a model's response can be sent on to other AWS services like SNS
 or SQS in the chain.
 
 In this example, the model's response is sent as a message to an SNS topic.
+
 <table>
 <tr>
 <td> Sample chain </td> <td> Sample input </td> <td> Sample SNS topic message </td>
@@ -936,6 +956,7 @@ chain = generate_book_summary.next(notify_me)
 ```
 
 See a full example of using this technique with Step Functions [here](techniques_step_functions/stacks/aws_service_invocation.py).
+
 </details>
 
 <details>
@@ -976,6 +997,7 @@ bedrock.CfnFlow.FlowNodeProperty(
 
 The Bedrock Flows condition example [here](techniques_bedrock_flows/stacks/conditional_chain.py)
 contains an example of invoking a Lambda function as part of a flow.
+
 </details>
 
 ### Handle failures in chains
@@ -1023,6 +1045,7 @@ If the model cannot fix the JSON within three attempts, the workflow fails.
   ]
 }
 ```
+
 </td>
 </tr>
 </table>
@@ -1068,6 +1091,7 @@ chain = generate_books_list.next(initialize_parse_attempt_counter).next(
 ```
 
 See a full example of using this technique with Step Functions [here](techniques_step_functions/stacks/validation_chain.py).
+
 </details>
 
 <details>
@@ -1080,6 +1104,7 @@ For example, if a Lambda function that validates the model's response
 throws an exception on failure to parse, the flow will fail.
 Your function would need to return a special response for parsing failure,
 which can be handled by a Condition node (see the Condition section).
+
 </details>
 
 ### Wait for human input
@@ -1104,6 +1129,7 @@ Here is a draft 150-word advertisement for Pride and Prejudice by Jane Austen:
 Tales of love, manners, and misunderstanding in Regency-era England
 <br/><br/>
 Pride and prejudice collide in Jane Austen's beloved romantic classic. Follow the spirited Elizabeth Bennet and her sisters as they navigate the balls and social events of 19th century British high society in their pursuit of marriage and love. Full of wit, Mrs. Bennet's constant efforts to marry off her daughters provide much comic relief. But at the center is the pride of Mr. Darcy and Elizabeth's prejudice against him, as both struggle against their initial impressions and find their feelings growing deeper. Austen crafts a timeless story of the challenges for women and men seeking partners, and the obstacles of class and social pressures. Immerse yourself in Austen's rich comedy of manners, keen social commentary, and the development of one of literature's most romantic couples. Join the Bennet family in their memorable adventures in this prose gem that has charmed readers for over 200 years.
+
 </td>
 </tr>
 </table>
@@ -1173,6 +1199,7 @@ chain = generate_advertisement.next(publish_ad_for_approval).next(
 ```
 
 See a full example of using this technique with Step Functions [here](techniques_step_functions/stacks/human_input_chain.py).
+
 </details>
 
 <details>
@@ -1183,6 +1210,7 @@ Compared to the Step Functions solution,
 Bedrock Flows does not support pausing the flow to wait for human input.
 You would need to orchestrate custom logic outside of Bedrock Flows
 that waits for human input and invokes a new flow when human input is available.
+
 </details>
 
 ## Prompt chaining applications

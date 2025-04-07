@@ -1,5 +1,4 @@
 from aws_cdk import (
-    CfnOutput,
     Duration,
     Stack,
     aws_bedrock as bedrock,
@@ -36,9 +35,7 @@ class MostPopularRepoBedrockAgentStack(Stack):
                     "bedrock:InvokeModel",
                 ],
                 resources=[
-                    f"arn:aws:bedrock:{self.region}::foundation-model/anthropic.claude-v2",
-                    f"arn:aws:bedrock:{self.region}::foundation-model/anthropic.claude-v2:1",
-                    f"arn:aws:bedrock:{self.region}::foundation-model/anthropic.claude-instant-v1",
+                    f"arn:aws:bedrock:{self.region}::foundation-model/anthropic.claude-*",
                 ],
             )
         )
@@ -86,7 +83,7 @@ class MostPopularRepoBedrockAgentStack(Stack):
             foundation_model=bedrock.FoundationModel.from_foundation_model_id(
                 self,
                 "Model",
-                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_V2,
+                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
             ).model_id,
             instruction=(
                 "You are a GitHub power user. "

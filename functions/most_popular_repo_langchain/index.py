@@ -8,13 +8,11 @@ import json
 
 from langchain.agents.initialize import initialize_agent
 from langchain.agents.agent_types import AgentType
-from langchain_community.llms.bedrock import Bedrock
+from langchain_community.chat_models.bedrock import BedrockChat
 from langchain_community.utilities.requests import TextRequestsWrapper
 from langchain_core.tools import Tool
 
-bedrock_client = boto3.client(
-    "bedrock-runtime", config=Config(retries={"max_attempts": 6, "mode": "standard"})
-)
+bedrock_client_config = Config(retries={"max_attempts": 6, "mode": "standard"})
 secrets_client = boto3.client("secretsmanager")
 github_token_secret_name = os.environ.get("GITHUB_TOKEN_SECRET")
 
@@ -87,13 +85,13 @@ def get_github_langchain_tools():
 
 ### Agents ###
 def lookup_trending_repo_agent(event, context):
-    llm = Bedrock(
-        model_id="anthropic.claude-v2",
+    llm = BedrockChat(
+        model_id="anthropic.claude-3-haiku-20240307-v1:0",
         model_kwargs={
             "temperature": 0,
-            "max_tokens_to_sample": 256,
+            "max_tokens": 256,
         },
-        client=bedrock_client,
+        config=bedrock_client_config,
     )
     example_github_url = "https://github.com/orgname/reponame"
     repo_url = None
@@ -140,13 +138,13 @@ def lookup_trending_repo_agent(event, context):
 
 
 def summarize_repo_readme_agent(event, context):
-    llm = Bedrock(
-        model_id="anthropic.claude-v2",
+    llm = BedrockChat(
+        model_id="anthropic.claude-3-haiku-20240307-v1:0",
         model_kwargs={
             "temperature": 0,
-            "max_tokens_to_sample": 500,
+            "max_tokens": 500,
         },
-        client=bedrock_client,
+        config=bedrock_client_config,
     )
 
     agent = initialize_agent(
