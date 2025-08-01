@@ -1,6 +1,6 @@
 langchain==0.3.26
 langchain-community==0.3.26
 requests==2.32.4
-PyGithub==2.6.1
+PyGithub==2.7.0
 boto3==1.39.0
 beautifulsoup4
