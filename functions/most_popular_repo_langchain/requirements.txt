@@ -1,4 +1,4 @@
-langchain==0.3.27
+langchain==1.0.3
 langchain-community==0.3.30
 requests==2.32.5
 PyGithub==2.8.1
