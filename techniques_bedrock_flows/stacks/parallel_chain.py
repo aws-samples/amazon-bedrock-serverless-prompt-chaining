@@ -422,7 +422,7 @@ class FlowsParallelChain(Stack):
         flow_execution_role.add_to_policy(
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
-                actions=["bedrock:RenderPrompt"],
+                actions=["bedrock:GetPrompt", "bedrock:RenderPrompt"],
                 resources=[
                     f"{get_summary_prompt.attr_arn}:*",
                     f"{get_target_audience_prompt.attr_arn}:*",

@@ -575,7 +575,7 @@ Do not include any other content other than the JSON object in your response. Do
         flow_execution_role.add_to_policy(
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
-                actions=["bedrock:RenderPrompt"],
+                actions=["bedrock:GetPrompt", "bedrock:RenderPrompt"],
                 resources=[
                     f"{get_books_prompt.attr_arn}:*",
                     f"{get_summary_prompt.attr_arn}:*",
