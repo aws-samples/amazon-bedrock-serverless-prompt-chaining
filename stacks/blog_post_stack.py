@@ -5,7 +5,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-from .util import get_anthropic_claude_invoke_chain
+from .util import get_anthropic_claude_invoke_chain, get_bedrock_iam_policy_statement
 
 
 class BlogPostStack(Stack):
@@ -84,10 +84,13 @@ class BlogPostStack(Stack):
             .next(select_final_answer)
         )
 
-        sfn.StateMachine(
+        state_machine = sfn.StateMachine(
             self,
             "BlogPostWorkflow",
             state_machine_name="PromptChainDemo-BlogPost",
             definition_body=sfn.DefinitionBody.from_chainable(chain),
             timeout=Duration.minutes(5),
         )
+
+        # Add IAM permissions for Bedrock model invocation
+        state_machine.add_to_role_policy(get_bedrock_iam_policy_statement())

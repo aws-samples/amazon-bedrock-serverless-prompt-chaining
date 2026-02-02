@@ -4,17 +4,14 @@ from aws_cdk import (
     aws_iam as iam,
 )
 from constructs import Construct
+from .inference_profile import InferenceProfile
 
 
 class FlowsParallelChain(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        model = bedrock.FoundationModel.from_foundation_model_id(
-            self,
-            "Model",
-            bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
-        )
+        model = InferenceProfile(self, "Model", "global.anthropic.claude-haiku-4-5-20251001-v1:0")
 
         # Define the prompts
         get_summary_prompt_content = (
@@ -416,7 +413,10 @@ class FlowsParallelChain(Stack):
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
                 actions=["bedrock:InvokeModel"],
-                resources=[model.model_arn],
+                resources=[
+                    model.get_foundation_model_arn_pattern(),
+                    model.model_arn,  # Also allow the inference profile ARN
+                ],
             )
         )
         flow_execution_role.add_to_policy(

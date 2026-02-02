@@ -11,6 +11,7 @@ from constructs import Construct
 from .util import (
     get_anthropic_claude_invoke_chain,
     get_json_response_parser_step,
+    get_bedrock_iam_policy_statement,
 )
 
 
@@ -23,7 +24,9 @@ class StoryWriterStack(Stack):
             self,
             "Generate Characters",
             prompt=sfn.JsonPath.format(
-                """You are an award-winning fiction writer and you are writing a new story about {}.
+                """IMPORTANT: Your response must be ONLY a JSON array. Do not use markdown code blocks, backticks, or any formatting. Start your response directly with the opening bracket.
+
+You are an award-winning fiction writer and you are writing a new story about {}.
 Before writing the story, describe five characters that will be in the story.
 
 Your response should be formatted as a JSON array, with each element in the array containing a "name" key for the character's name and a "description" key with the character's description.
@@ -40,10 +43,10 @@ An example of a valid response is below, inside <example></example> XML tags.
     \}
 ]
 </example>
-Do not include any other content other than the JSON object in your response. Do not include any XML tags in your response.""",
+Do not include any other content other than the JSON object in your response. Do not include any XML tags in your response. Do not wrap the JSON in markdown code blocks or backticks.""",
                 sfn.JsonPath.string_at("$$.Execution.Input.story_description"),
             ),
-            max_tokens_to_sample=512,
+            max_tokens_to_sample=1024,
             include_previous_conversation_in_prompt=False,
         )
 
@@ -138,10 +141,13 @@ Do not include any other content other than the JSON object in your response. Do
             .next(select_story)
         )
 
-        sfn.StateMachine(
+        state_machine = sfn.StateMachine(
             self,
             "StoryWriterWorkflow",
             state_machine_name="PromptChainDemo-StoryWriter",
             definition_body=sfn.DefinitionBody.from_chainable(chain),
             timeout=Duration.minutes(5),
         )
+
+        # Add IAM permissions for Bedrock model invocation
+        state_machine.add_to_role_policy(get_bedrock_iam_policy_statement())

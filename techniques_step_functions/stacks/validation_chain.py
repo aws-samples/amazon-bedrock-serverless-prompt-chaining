@@ -1,4 +1,5 @@
 from aws_cdk import (
+    aws_iam as iam,
     Stack,
     aws_bedrock as bedrock,
     aws_lambda as lambda_,
@@ -7,6 +8,7 @@ from aws_cdk import (
     aws_stepfunctions_tasks as tasks,
 )
 from constructs import Construct
+from .inference_profile import InferenceProfile
 import json
 
 
@@ -14,8 +16,12 @@ class ValidationChain(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
+        model = InferenceProfile(self, "Model", "global.anthropic.claude-haiku-4-5-20251001-v1:0")
+
         # Generate a JSON array of book titles and authors
-        get_books_prompt = """Give me the titles and authors of 5 famous novels.
+        get_books_prompt = """IMPORTANT: Your response must be ONLY a JSON array. Do not use markdown code blocks, backticks, or any formatting. Start your response directly with the opening bracket.
+
+Give me the titles and authors of 5 famous novels.
 Your response should be formatted as a JSON array, with each element in the array containing a "title" key for the novel's title and an "author" key with the novel's author.
 An example of a valid response is below, inside <example></example> XML tags.
 <example>
@@ -23,23 +29,19 @@ An example of a valid response is below, inside <example></example> XML tags.
     \{
         "title": "Title 1",
         "author": "Author 1"
-    \},
-    \{
+    },
+    {
         "title": "Title 2",
         "author": "Author 2"
-    \}
+    }
 ]
 </example>
-Do not include any other content other than the JSON object in your response. Do not include any XML tags in your response."""
+Do not include any other content other than the JSON object in your response. Do not include any XML tags in your response. Do not wrap the JSON in markdown code blocks or backticks."""
 
         get_books = tasks.BedrockInvokeModel(
             self,
             "Generate Books Array",
-            model=bedrock.FoundationModel.from_foundation_model_id(
-                self,
-                "Model",
-                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
-            ),
+            model=model,
             # Provide the input to the model, including the prompt and inference properties
             body=sfn.TaskInput.from_object(
                 {
@@ -55,7 +57,7 @@ Do not include any other content other than the JSON object in your response. Do
                             ],
                         }
                     ],
-                    "max_tokens": 250,
+                    "max_tokens": 512,
                     "temperature": 1,
                 }
             ),
@@ -128,11 +130,7 @@ Do not include any other content other than the JSON object in your response. Do
         fix_json = tasks.BedrockInvokeModel(
             self,
             "Fix JSON",
-            model=bedrock.FoundationModel.from_foundation_model_id(
-                self,
-                "Model",
-                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
-            ),
+            model=model,
             # Provide the input to the model, including the prompt and inference properties
             body=sfn.TaskInput.from_object(
                 {
@@ -212,9 +210,18 @@ Remember - only return a valid JSON object.""",
             parse_model_response
         )
 
-        sfn.StateMachine(
+        state_machine = sfn.StateMachine(
             self,
             "ValidationExample",
             state_machine_name="Techniques-Validation",
             definition_body=sfn.DefinitionBody.from_chainable(chain),
+        )
+
+        # Add IAM permission for the foundation model
+        state_machine.add_to_role_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=["bedrock:InvokeModel"],
+                resources=[model.get_foundation_model_arn_pattern()],
+            )
         )

@@ -14,6 +14,7 @@ from .util import (
     get_anthropic_claude_invoke_chain,
     get_anthropic_claude_prepare_prompt_step,
     get_anthropic_claude_invoke_model_step,
+    get_bedrock_iam_policy_statement,
 )
 
 
@@ -249,7 +250,7 @@ Now create a one-page movie pitch, based on your previous short description for 
             .next(start_user_choice_fork)
         )
 
-        sfn.StateMachine(
+        state_machine = sfn.StateMachine(
             self,
             "MoviePitchWorkflow",
             state_machine_name="PromptChainDemo-MoviePitch",
@@ -257,3 +258,6 @@ Now create a one-page movie pitch, based on your previous short description for 
             # 1 hour to account for getting user feedback in the UI
             timeout=Duration.hours(1),
         )
+
+        # Add IAM permissions for Bedrock model invocation
+        state_machine.add_to_role_policy(get_bedrock_iam_policy_statement())

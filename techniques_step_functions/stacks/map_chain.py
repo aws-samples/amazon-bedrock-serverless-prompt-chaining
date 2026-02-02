@@ -1,25 +1,25 @@
 from aws_cdk import (
+    aws_iam as iam,
     Stack,
     aws_bedrock as bedrock,
     aws_stepfunctions as sfn,
     aws_stepfunctions_tasks as tasks,
 )
 from constructs import Construct
+from .inference_profile import InferenceProfile
 
 
 class MapChain(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
+        model = InferenceProfile(self, "Model", "global.anthropic.claude-haiku-4-5-20251001-v1:0")
+
         # Generate a JSON array of book titles and authors
         get_books = tasks.BedrockInvokeModel(
             self,
             "Generate Books Array",
-            model=bedrock.FoundationModel.from_foundation_model_id(
-                self,
-                "Model",
-                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
-            ),
+            model=model,
             # Provide the input to the model, including the prompt and inference properties
             body=sfn.TaskInput.from_object(
                 {
@@ -31,7 +31,9 @@ class MapChain(Stack):
                                 {
                                     "type": "text",
                                     # The main prompt
-                                    "text": """Give me the titles and authors of 5 famous novels.
+                                    "text": """IMPORTANT: Your response must be ONLY a JSON array. Do not use markdown code blocks, backticks, or any formatting. Start your response directly with the opening bracket.
+
+Give me the titles and authors of 5 famous novels.
 Your response should be formatted as a JSON array, with each element in the array containing a "title" key for the novel's title and an "author" key with the novel's author.
 An example of a valid response is below, inside <example></example> XML tags.
 <example>
@@ -43,15 +45,15 @@ An example of a valid response is below, inside <example></example> XML tags.
     \{
         "title": "Title 2",
         "author": "Author 2"
-    \}
+    }
 ]
 </example>
-Do not include any other content other than the JSON object in your response. Do not include any XML tags in your response.""",
+Do not include any other content other than the JSON object in your response. Do not include any XML tags in your response. Do not wrap the JSON in markdown code blocks or backticks.""",
                                 }
                             ],
                         }
                     ],
-                    "max_tokens": 250,
+                    "max_tokens": 512,
                     "temperature": 1,
                 }
             ),
@@ -70,11 +72,7 @@ Do not include any other content other than the JSON object in your response. Do
         get_summary = tasks.BedrockInvokeModel(
             self,
             "Generate Novel Summary",
-            model=bedrock.FoundationModel.from_foundation_model_id(
-                self,
-                "Model",
-                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
-            ),
+            model=model,
             body=sfn.TaskInput.from_object(
                 {
                     "anthropic_version": "bedrock-2023-05-31",
@@ -113,11 +111,7 @@ Do not include any other content other than the JSON object in your response. Do
         write_an_advertisement = tasks.BedrockInvokeModel(
             self,
             "Generate Bookstore Advertisement",
-            model=bedrock.FoundationModel.from_foundation_model_id(
-                self,
-                "Model",
-                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
-            ),
+            model=model,
             body=sfn.TaskInput.from_object(
                 {
                     "anthropic_version": "bedrock-2023-05-31",
@@ -180,9 +174,18 @@ Do not include any other content other than the JSON object in your response. Do
             .next(write_an_advertisement)
         )
 
-        sfn.StateMachine(
+        state_machine = sfn.StateMachine(
             self,
             "MapExample",
             state_machine_name="Techniques-Map",
             definition_body=sfn.DefinitionBody.from_chainable(chain),
+        )
+
+        # Add IAM permission for the foundation model
+        state_machine.add_to_role_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=["bedrock:InvokeModel"],
+                resources=[model.get_foundation_model_arn_pattern()],
+            )
         )

@@ -86,7 +86,7 @@ def get_github_langchain_tools():
 ### Agents ###
 def lookup_trending_repo_agent(event, context):
     llm = BedrockChat(
-        model_id="anthropic.claude-3-haiku-20240307-v1:0",
+        model_id="anthropic.claude-3-5-sonnet-20241022-v2:0",
         model_kwargs={
             "temperature": 0,
             "max_tokens": 256,
@@ -139,7 +139,7 @@ def lookup_trending_repo_agent(event, context):
 
 def summarize_repo_readme_agent(event, context):
     llm = BedrockChat(
-        model_id="anthropic.claude-3-haiku-20240307-v1:0",
+        model_id="anthropic.claude-3-5-sonnet-20241022-v2:0",
         model_kwargs={
             "temperature": 0,
             "max_tokens": 500,

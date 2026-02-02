@@ -11,6 +11,7 @@ from aws_cdk import (
     aws_stepfunctions_tasks as tasks,
 )
 from constructs import Construct
+from .inference_profile import InferenceProfile
 import os
 
 dirname = os.path.dirname(__file__)
@@ -36,6 +37,8 @@ class MostPopularRepoBedrockAgentStack(Stack):
                 ],
                 resources=[
                     f"arn:aws:bedrock:{self.region}::foundation-model/anthropic.claude-*",
+                    f"arn:aws:bedrock:*:{self.account}:inference-profile/*",
+                    f"arn:aws:bedrock:*::foundation-model/anthropic.claude-3-7-sonnet-20250219-v1:0",
                 ],
             )
         )
@@ -80,11 +83,7 @@ class MostPopularRepoBedrockAgentStack(Stack):
             self,
             "Agent",
             agent_name="PromptChainDemo-MostPopularRepo",
-            foundation_model=bedrock.FoundationModel.from_foundation_model_id(
-                self,
-                "Model",
-                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
-            ).model_id,
+            foundation_model="us.anthropic.claude-3-7-sonnet-20250219-v1:0",
             instruction=(
                 "You are a GitHub power user. "
                 "You help with interacting with GitHub and with git repositories. "
@@ -137,6 +136,18 @@ class MostPopularRepoBedrockAgentStack(Stack):
             ],
         )
 
+        # Lambda functions also need permission to invoke models
+        bedrock_model_access_policy = iam.PolicyStatement(
+            effect=iam.Effect.ALLOW,
+            actions=[
+                "bedrock:InvokeModel",
+            ],
+            resources=[
+                f"arn:aws:bedrock:{self.region}::foundation-model/anthropic.claude-*",
+                f"arn:aws:bedrock:{self.region}:{self.account}:inference-profile/*",
+            ],
+        )
+
         ### Agents and Workflow ###
 
         # Agent #1: look up the highest trending repo on GitHub
@@ -157,6 +168,7 @@ class MostPopularRepoBedrockAgentStack(Stack):
             },
         )
         lookup_repo_lambda.add_to_role_policy(bedrock_agent_access_policy)
+        lookup_repo_lambda.add_to_role_policy(bedrock_model_access_policy)
 
         lookup_repo_job = tasks.LambdaInvoke(
             self,
@@ -183,6 +195,7 @@ class MostPopularRepoBedrockAgentStack(Stack):
             },
         )
         summarize_repo_lambda.add_to_role_policy(bedrock_agent_access_policy)
+        summarize_repo_lambda.add_to_role_policy(bedrock_model_access_policy)
 
         summarize_repo_job = tasks.LambdaInvoke(
             self,

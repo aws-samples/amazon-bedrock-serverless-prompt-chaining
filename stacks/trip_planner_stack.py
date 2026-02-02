@@ -14,6 +14,7 @@ from constructs import Construct
 from .util import (
     get_lambda_bundling_options,
     get_anthropic_claude_invoke_chain,
+    get_bedrock_iam_policy_statement,
 )
 
 
@@ -186,10 +187,13 @@ The itinerary should be formatted in Markdown format.""",
             .next(pdf_job)
         )
 
-        sfn.StateMachine(
+        state_machine = sfn.StateMachine(
             self,
             "TripPlannerWorkflow",
             state_machine_name="PromptChainDemo-TripPlanner",
             definition_body=sfn.DefinitionBody.from_chainable(chain),
             timeout=Duration.minutes(5),
         )
+
+        # Add IAM permissions for Bedrock model invocation
+        state_machine.add_to_role_policy(get_bedrock_iam_policy_statement())

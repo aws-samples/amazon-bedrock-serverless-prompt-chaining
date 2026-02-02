@@ -107,7 +107,7 @@ tasks.BedrockInvokeModel(
     model=bedrock.FoundationModel.from_foundation_model_id(
         self,
         "Model",
-        bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
+        bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_HAIKU_4_5_20251001_V1_0,
     ),
     # Provide the input to the model, including the prompt and inference properties
     body=sfn.TaskInput.from_object(
@@ -167,7 +167,7 @@ generate_book_summary_prompt = bedrock.CfnPrompt(
             model_id=bedrock.FoundationModel.from_foundation_model_id(
                 self,
                 "Model",
-                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
+                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_HAIKU_4_5_20251001_V1_0,
             ),
             inference_configuration=bedrock.CfnPrompt.PromptInferenceConfigurationProperty(
                 text=bedrock.CfnPrompt.PromptModelInferenceConfigurationProperty(
@@ -1359,8 +1359,6 @@ one uses [Bedrock Agents](https://aws.amazon.com/bedrock/agents/)
 and the other uses [Langchain agents](https://python.langchain.com/docs/modules/agents/agent_types/react).
 
 CDK code for Bedrock Agents version: [stacks/most_popular_repo_bedrock_agent_stack.py](stacks/most_popular_repo_bedrock_agent_stack.py)
-
-Note that Bedrock Agents does not yet support CloudFormation. The CDK stack creates all other resources required by the agent, but the agent itself must be created manually. Instructions for manually creating the agent in Bedrock Agents are [here](DEVELOP.md).
 
 CDK code for Langchain version: [stacks/most_popular_repo_langchain_stack.py](stacks/most_popular_repo_langchain_stack.py)
 

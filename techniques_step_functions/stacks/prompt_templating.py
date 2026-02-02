@@ -1,25 +1,30 @@
 from aws_cdk import (
+    aws_iam as iam,
     Stack,
     aws_bedrock as bedrock,
     aws_stepfunctions as sfn,
     aws_stepfunctions_tasks as tasks,
 )
 from constructs import Construct
+from .inference_profile import InferenceProfile
+
 
 
 class PromptTemplating(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
+        model = InferenceProfile(
+            self,
+            "Model",
+            "global.anthropic.claude-haiku-4-5-20251001-v1:0",
+        )
+
         get_summary = tasks.BedrockInvokeModel(
             self,
             "Generate Book Summary",
             # Choose the model to invoke
-            model=bedrock.FoundationModel.from_foundation_model_id(
-                self,
-                "Model",
-                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
-            ),
+            model=model,
             # Provide the input to the model, including the templated prompt and inference properties
             body=sfn.TaskInput.from_object(
                 {
@@ -49,9 +54,18 @@ class PromptTemplating(Stack):
             output_path="$.Body.content[0].text",
         )
 
-        sfn.StateMachine(
+        state_machine = sfn.StateMachine(
             self,
             "PromptTemplatingExample",
             state_machine_name="Techniques-PromptTemplating",
             definition_body=sfn.DefinitionBody.from_chainable(get_summary),
+        )
+
+        # Add IAM permission for the foundation model
+        state_machine.add_to_role_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=["bedrock:InvokeModel"],
+                resources=[model.get_foundation_model_arn_pattern()],
+            )
         )

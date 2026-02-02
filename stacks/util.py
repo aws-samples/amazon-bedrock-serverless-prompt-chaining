@@ -8,6 +8,7 @@ from aws_cdk import (
     aws_stepfunctions_tasks as tasks,
 )
 from constructs import Construct
+from .inference_profile import InferenceProfile
 import builtins
 import typing
 import jsii
@@ -44,6 +45,7 @@ def get_bedrock_iam_policy_statement():
         ],
         resources=[
             "arn:aws:bedrock:*::foundation-model/anthropic.claude-*",
+            "arn:aws:bedrock:*:*:inference-profile/*",
         ],
     )
 
@@ -107,7 +109,7 @@ def get_anthropic_claude_prepare_prompt_step(
 def get_anthropic_claude_invoke_model_step(
     scope: Construct,
     id: builtins.str,
-    claude_model_id: bedrock.FoundationModelIdentifier = bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
+    claude_model_id: str = "global.anthropic.claude-haiku-4-5-20251001-v1:0",
     max_tokens_to_sample: typing.Optional[int] = 250,
     temperature: typing.Optional[float] = 1,
     flatten_messages: typing.Optional[bool] = False,
@@ -117,11 +119,7 @@ def get_anthropic_claude_invoke_model_step(
     invoke_model = tasks.BedrockInvokeModel(
         scope,
         id + " (Invoke Model)",
-        model=bedrock.FoundationModel.from_foundation_model_id(
-            scope,
-            "Model",
-            claude_model_id,
-        ),
+        model=InferenceProfile(scope, id + "Model", claude_model_id),
         body=sfn.TaskInput.from_object(
             {
                 "anthropic_version": "bedrock-2023-05-31",
@@ -204,7 +202,7 @@ def get_anthropic_claude_invoke_chain(
     scope: Construct,
     id: builtins.str,
     prompt: builtins.str,
-    claude_model_id: bedrock.FoundationModelIdentifier = bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
+    claude_model_id: str = "global.anthropic.claude-haiku-4-5-20251001-v1:0",
     initial_assistant_text: typing.Optional[str] = "",
     include_initial_assistant_text_in_response: typing.Optional[bool] = True,
     max_tokens_to_sample: typing.Optional[int] = 250,

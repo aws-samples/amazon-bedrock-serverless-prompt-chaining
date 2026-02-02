@@ -1,24 +1,24 @@
 from aws_cdk import (
+    aws_iam as iam,
     Stack,
     aws_bedrock as bedrock,
     aws_stepfunctions as sfn,
     aws_stepfunctions_tasks as tasks,
 )
 from constructs import Construct
+from .inference_profile import InferenceProfile
 
 
 class ConditionalChain(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
+        model = InferenceProfile(self, "Model", "global.anthropic.claude-haiku-4-5-20251001-v1:0")
+
         validate_input = tasks.BedrockInvokeModel(
             self,
             "Decide if input is a book",
-            model=bedrock.FoundationModel.from_foundation_model_id(
-                self,
-                "Model",
-                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
-            ),
+            model=model,
             body=sfn.TaskInput.from_object(
                 {
                     "anthropic_version": "bedrock-2023-05-31",
@@ -30,7 +30,9 @@ class ConditionalChain(Stack):
                                     "type": "text",
                                     # As the model if the input is a book or not
                                     "text": sfn.JsonPath.format(
-                                        """Does the following text in <text></text> XML tags refer to the name of a book?
+                                        """IMPORTANT: Your response must be ONLY a JSON object. Do not use markdown code blocks, backticks, or any formatting. Start your response directly with the opening brace.
+
+Does the following text in <text></text> XML tags refer to the name of a book?
 <text>
 {}
 </text>
@@ -52,7 +54,7 @@ Another example of a valid response is below when the text does NOT refer to a b
     "is_book": "no"
 \}
 </example>
-Do not include any other content other than the JSON object in your response. Do not include any XML tags in your response.""",
+Do not include any other content other than the JSON object in your response. Do not include any XML tags in your response. Do not wrap the JSON in markdown code blocks or backticks.""",
                                         sfn.JsonPath.string_at("$$.Execution.Input"),
                                     ),
                                 }
@@ -79,11 +81,7 @@ Do not include any other content other than the JSON object in your response. Do
             self,
             "Generate Book Summary",
             # Choose the model to invoke
-            model=bedrock.FoundationModel.from_foundation_model_id(
-                self,
-                "Model",
-                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
-            ),
+            model=model,
             # Provide the input to the model, including the prompt and inference properties
             body=sfn.TaskInput.from_object(
                 {
@@ -109,11 +107,7 @@ Do not include any other content other than the JSON object in your response. Do
         write_an_advertisement = tasks.BedrockInvokeModel(
             self,
             "Generate Book Advertisement",
-            model=bedrock.FoundationModel.from_foundation_model_id(
-                self,
-                "Model",
-                bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
-            ),
+            model=model,
             body=sfn.TaskInput.from_object(
                 {
                     "anthropic_version": "bedrock-2023-05-31",
@@ -165,9 +159,18 @@ Do not include any other content other than the JSON object in your response. Do
         )
         chain = validate_input.next(model_response_to_array).next(book_decision)
 
-        sfn.StateMachine(
+        state_machine = sfn.StateMachine(
             self,
             "ConditionalChainExample",
             state_machine_name="Techniques-ConditionalChain",
             definition_body=sfn.DefinitionBody.from_chainable(chain),
+        )
+
+        # Add IAM permission for the foundation model
+        state_machine.add_to_role_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=["bedrock:InvokeModel"],
+                resources=[model.get_foundation_model_arn_pattern()],
+            )
         )

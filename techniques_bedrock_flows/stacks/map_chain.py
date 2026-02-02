@@ -6,6 +6,7 @@ from aws_cdk import (
     aws_lambda_python_alpha as lambda_python,
 )
 from constructs import Construct
+from .inference_profile import InferenceProfile
 import json
 
 
@@ -13,14 +14,12 @@ class FlowsMapChain(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        model = bedrock.FoundationModel.from_foundation_model_id(
-            self,
-            "Model",
-            bedrock.FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_HAIKU_20240307_V1_0,
-        )
+        model = InferenceProfile(self, "Model", "global.anthropic.claude-haiku-4-5-20251001-v1:0")
 
         # Define the prompts
-        get_books_prompt_content = """Give me the titles and authors of 5 famous novels.
+        get_books_prompt_content = """IMPORTANT: Your response must be ONLY a JSON array. Do not use markdown code blocks, backticks, or any formatting. Start your response directly with the opening bracket.
+
+Give me the titles and authors of 5 famous novels.
 Your response should be formatted as a JSON array, with each element in the array containing a "title" key for the novel's title and an "author" key with the novel's author.
 An example of a valid response is below, inside <example></example> XML tags.
 <example>
@@ -35,7 +34,7 @@ An example of a valid response is below, inside <example></example> XML tags.
     }
 ]
 </example>
-Do not include any other content other than the JSON object in your response. Do not include any XML tags in your response."""
+Do not include any other content other than the JSON object in your response. Do not include any XML tags in your response. Do not wrap the JSON in markdown code blocks or backticks."""
 
         get_summary_prompt_content = (
             "Write a 1-2 sentence summary for the novel {{title}} by {{author}}."
@@ -67,7 +66,7 @@ Do not include any other content other than the JSON object in your response. Do
                     model_id=model.model_id,
                     inference_configuration=bedrock.CfnPrompt.PromptInferenceConfigurationProperty(
                         text=bedrock.CfnPrompt.PromptModelInferenceConfigurationProperty(
-                            max_tokens=250,
+                            max_tokens=512,
                             temperature=1,
                         )
                     ),
@@ -569,7 +568,10 @@ Do not include any other content other than the JSON object in your response. Do
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
                 actions=["bedrock:InvokeModel"],
-                resources=[model.model_arn],
+                resources=[
+                    model.get_foundation_model_arn_pattern(),
+                    model.model_arn,  # Also allow the inference profile ARN
+                ],
             )
         )
         flow_execution_role.add_to_policy(

@@ -12,6 +12,7 @@ from .util import (
     get_lambda_bundling_options,
     get_anthropic_claude_invoke_chain,
     get_json_response_parser_step,
+    get_bedrock_iam_policy_statement,
 )
 
 
@@ -78,6 +79,8 @@ Multiple contestants are competing to prepare the tastiest dish using a set of i
             )
 
         meal_scoring_prompt += """
+IMPORTANT: Your response must be ONLY a JSON object. Do not use markdown code blocks, backticks, or any formatting. Start your response directly with the opening brace.
+
 Score the tastiness of each contestant's dish using a number between 0 and 100.
 Try to have a distinct tastiness score for each contestant. Output 1 or 2 sentences explaining your reasoning for how you scored the contestant, and then output the score.
 
@@ -97,7 +100,7 @@ An example of a valid response is below, inside <example></example> XML tags.
         meal_scoring_prompt += """
 \}
 </example>
-Do not include any other content other than the JSON object in your response. Do not include any XML tags in your response."""
+Do not include any other content other than the JSON object in your response. Do not include any XML tags in your response. Do not wrap the JSON in markdown code blocks or backticks."""
 
         meal_scoring_job = get_anthropic_claude_invoke_chain(
             self,
@@ -264,6 +267,8 @@ Multiple other chefs are working together to agree on the tastiest dinner I coul
             )
 
         referee_prompt += """
+IMPORTANT: Your response must be ONLY a JSON object. Do not use markdown code blocks, backticks, or any formatting. Start your response directly with the opening brace.
+
 Do these chefs agree with each other on the tastiest meal I could make?
 Answer no only if the chefs suggested very different meals.
 Answer yes if the chefs suggested the same meal, similar meals, or meals that are a small variation of each other.
@@ -285,7 +290,7 @@ Another example of a valid response is below when the chefs do not agree, inside
     "do_chefs_agree": "no"
 \}
 </example>
-Do not include any other content other than the JSON object in your response. Do not include any XML tags in your response."""
+Do not include any other content other than the JSON object in your response. Do not include any XML tags in your response. Do not wrap the JSON in markdown code blocks or backticks."""
 
         meal_debate_referee_job = get_anthropic_claude_invoke_chain(
             self,
@@ -417,10 +422,13 @@ Create a recipe for this meal, based on your previous meal suggestion and the in
             .next(meal_consensus_fork)
         )
 
-        sfn.StateMachine(
+        state_machine = sfn.StateMachine(
             self,
             "MealPlannerWorkflow",
             state_machine_name="PromptChainDemo-MealPlanner",
             definition_body=sfn.DefinitionBody.from_chainable(chain),
             timeout=Duration.minutes(5),
         )
+
+        # Add IAM permissions for Bedrock model invocation
+        state_machine.add_to_role_policy(get_bedrock_iam_policy_statement())
