@@ -1356,11 +1356,11 @@ requiring ReAct prompting can be broken down into multiple chained subtasks.
 
 This example is implemented in two different versions,
 one uses [Bedrock Agents](https://aws.amazon.com/bedrock/agents/)
-and the other uses [Langchain agents](https://python.langchain.com/docs/modules/agents/agent_types/react).
+and the other uses [Strands Agents SDK](https://strandsagents.com/).
 
 CDK code for Bedrock Agents version: [stacks/most_popular_repo_bedrock_agent_stack.py](stacks/most_popular_repo_bedrock_agent_stack.py)
 
-CDK code for Langchain version: [stacks/most_popular_repo_langchain_stack.py](stacks/most_popular_repo_langchain_stack.py)
+CDK code for Strands version: [stacks/most_popular_repo_strands_stack.py](stacks/most_popular_repo_strands_stack.py)
 
 ## Deploy the examples
 

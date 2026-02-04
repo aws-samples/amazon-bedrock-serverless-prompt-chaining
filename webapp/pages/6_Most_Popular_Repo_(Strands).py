@@ -6,7 +6,7 @@ import stepfn
 
 st.set_page_config(layout="wide")
 
-st.title("Most popular repo demo - Langchain version")
+st.title("Most popular repo demo - Strands version")
 
 execution_status_container = None
 
@@ -33,7 +33,7 @@ def display_no_state_machine_status():
 
 def execute_state_machine():
     execution_arn = stepfn.start_execution(
-        "PromptChainDemo-MostPopularRepoLangchain",
+        "PromptChainDemo-MostPopularRepoStrands",
         st.session_state.user_id,
         "{}",
     )

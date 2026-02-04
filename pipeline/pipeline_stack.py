@@ -315,7 +315,7 @@ class PipelineStack(Stack):
                                 "sleep 30",
                                 "./run-test-execution.sh MostPopularRepoBedrockAgents",
                                 "sleep 30",
-                                "./run-test-execution.sh MostPopularRepoLangchain",
+                                "./run-test-execution.sh MostPopularRepoStrands",
                             ]
                         },
                     },

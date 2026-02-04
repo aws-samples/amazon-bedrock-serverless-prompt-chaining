@@ -10,8 +10,8 @@ from stacks.meal_planner_stack import MealPlannerStack
 from stacks.most_popular_repo_bedrock_agent_stack import (
     MostPopularRepoBedrockAgentStack,
 )
-from stacks.most_popular_repo_langchain_stack import (
-    MostPopularRepoLangchainStack,
+from stacks.most_popular_repo_strands_stack import (
+    MostPopularRepoStrandsStack,
 )
 from stacks.alarms_stack import AlarmsStack
 
@@ -79,10 +79,10 @@ def test_mostpopularrepo_bedrockagents_stack_synthesizes_properly():
     Template.from_stack(test_stack)
 
 
-def test_mostpopularrepo_langchain_stack_synthesizes_properly():
+def test_mostpopularrepo_strands_stack_synthesizes_properly():
     app = cdk.App()
 
-    test_stack = MostPopularRepoLangchainStack(
+    test_stack = MostPopularRepoStrandsStack(
         app,
         "TestStack",
     )

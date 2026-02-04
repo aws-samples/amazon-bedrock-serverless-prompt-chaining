@@ -73,12 +73,8 @@ updates:
   open-pull-requests-limit: 10
   versioning-strategy: increase
 - package-ecosystem: pip
-  directory: "/functions/most_popular_repo_langchain"
+  directory: "/functions/most_popular_repo_strands"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
-  ignore:
-    # Langchain 1.x has breaking changes
-    - dependency-name: langchain
-    - dependency-name: langchain-community

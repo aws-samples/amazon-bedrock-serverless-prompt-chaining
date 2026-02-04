@@ -182,7 +182,7 @@ cdk watch --app 'python3 cdk_stacks.py' \
     PromptChaining-MoviePitchDemo \
     PromptChaining-MealPlannerDemo \
     PromptChaining-MostPopularRepoBedrockAgentsDemo \
-    PromptChaining-MostPopularRepoLangchainDemo
+    PromptChaining-MostPopularRepoStrandsDemo
 ```
 
 Then in a separate terminal, run test executions in the cloud after making changes to your code.
@@ -200,5 +200,5 @@ Edit the files in the `test-inputs` directory to change the test execution input
 
 ./run-test-execution.sh MostPopularRepoBedrockAgents
 
-./run-test-execution.sh MostPopularRepoLangchain
+./run-test-execution.sh MostPopularRepoStrands
 ```
