@@ -36,9 +36,9 @@ class MostPopularRepoBedrockAgentStack(Stack):
                     "bedrock:InvokeModel",
                 ],
                 resources=[
-                    f"arn:aws:bedrock:{self.region}::foundation-model/anthropic.claude-*",
+                    f"arn:aws:bedrock:{self.region}::foundation-model/amazon.nova-*",
                     f"arn:aws:bedrock:*:{self.account}:inference-profile/*",
-                    f"arn:aws:bedrock:*::foundation-model/anthropic.claude-3-7-sonnet-20250219-v1:0",
+                    f"arn:aws:bedrock:*::foundation-model/amazon.nova-*",
                 ],
             )
         )
@@ -83,7 +83,7 @@ class MostPopularRepoBedrockAgentStack(Stack):
             self,
             "Agent",
             agent_name="PromptChainDemo-MostPopularRepo",
-            foundation_model="us.anthropic.claude-3-7-sonnet-20250219-v1:0",
+            foundation_model="us.amazon.nova-pro-v1:0",
             instruction=(
                 "You are a GitHub power user. "
                 "You help with interacting with GitHub and with git repositories. "

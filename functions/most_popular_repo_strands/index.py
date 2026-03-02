@@ -109,7 +109,7 @@ def lookup_trending_repo_agent(event, context):
             return value
     
     llm = BedrockModel(
-        model_id="global.anthropic.claude-haiku-4-5-20251001-v1:0",
+        model_id="us.amazon.nova-pro-v1:0",
         temperature=0,
         max_tokens=256,
         boto_client_config=bedrock_client_config,
@@ -132,7 +132,7 @@ def lookup_trending_repo_agent(event, context):
 
 def summarize_repo_readme_agent(event, context):
     llm = BedrockModel(
-        model_id="global.anthropic.claude-haiku-4-5-20251001-v1:0",
+        model_id="us.amazon.nova-pro-v1:0",
         temperature=0,
         max_tokens=500,
         boto_client_config=bedrock_client_config,

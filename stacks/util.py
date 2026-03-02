@@ -45,6 +45,7 @@ def get_bedrock_iam_policy_statement():
         ],
         resources=[
             "arn:aws:bedrock:*::foundation-model/anthropic.claude-*",
+            "arn:aws:bedrock:*::foundation-model/amazon.nova-*",
             "arn:aws:bedrock:*:*:inference-profile/*",
         ],
     )
