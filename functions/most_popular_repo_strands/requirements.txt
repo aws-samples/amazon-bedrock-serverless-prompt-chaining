@@ -1,5 +1,5 @@
 strands-agents==1.38.0
 requests==2.33.1
 PyGithub==2.9.1
-boto3==1.42.81
+boto3==1.43.4
 beautifulsoup4==4.14.3
