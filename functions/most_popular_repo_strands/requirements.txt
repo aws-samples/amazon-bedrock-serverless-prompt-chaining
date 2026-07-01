@@ -1,4 +1,4 @@
-strands-agents==1.42.0
+strands-agents==1.45.0
 requests==2.34.2
 PyGithub==2.9.1
 boto3==1.43.20
