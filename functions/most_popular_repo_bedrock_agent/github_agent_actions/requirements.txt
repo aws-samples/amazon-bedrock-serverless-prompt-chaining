@@ -1,4 +1,4 @@
-boto3==1.43.61
+boto3==1.43.83
 requests==2.34.2
 PyGithub==2.10.0
 beautifulsoup4
