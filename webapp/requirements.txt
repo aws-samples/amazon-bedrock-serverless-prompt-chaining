@@ -1,2 +1,2 @@
 boto3==1.43.83
-streamlit>=1.60.0
+streamlit>=1.62.0
