@@ -6,75 +6,127 @@ updates:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
+  groups:
+    pip-root:
+      patterns:
+        - "*"
 - package-ecosystem: pip
   directory: "/pipeline"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
+  groups:
+    pip-pipeline:
+      patterns:
+        - "*"
 - package-ecosystem: pip
   directory: "/webapp"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
+  groups:
+    pip-webapp:
+      patterns:
+        - "*"
 - package-ecosystem: pip
   directory: "/functions/meal_planner/meal_choose_winner_agent"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
+  groups:
+    pip-functions-meal-planner-meal-choose-winner-agent:
+      patterns:
+        - "*"
 - package-ecosystem: pip
   directory: "/functions/generic/seek_user_input"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
+  groups:
+    pip-functions-generic-seek-user-input:
+      patterns:
+        - "*"
 - package-ecosystem: pip
   directory: "/functions/generic/merge_map_output"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
+  groups:
+    pip-functions-generic-merge-map-output:
+      patterns:
+        - "*"
 - package-ecosystem: pip
   directory: "/functions/generic/parse_json_response"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
+  groups:
+    pip-functions-generic-parse-json-response:
+      patterns:
+        - "*"
 - package-ecosystem: pip
   directory: "/techniques_step_functions/functions/parse_json_response"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
+  groups:
+    pip-techniques-step-functions-functions-parse-json-response:
+      patterns:
+        - "*"
 - package-ecosystem: pip
   directory: "/techniques_bedrock_flows/functions/parse_json_response"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
+  groups:
+    pip-techniques-bedrock-flows-functions-parse-json-response:
+      patterns:
+        - "*"
 - package-ecosystem: pip
   directory: "/functions/trip_planner/pdf_creator"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
+  groups:
+    pip-functions-trip-planner-pdf-creator:
+      patterns:
+        - "*"
 - package-ecosystem: pip
   directory: "/functions/most_popular_repo_bedrock_agent/github_agent_actions"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
+  groups:
+    pip-functions-most-popular-repo-bedrock-agent-github-agent-actions:
+      patterns:
+        - "*"
 - package-ecosystem: pip
   directory: "/functions/most_popular_repo_bedrock_agent/agent"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
+  groups:
+    pip-functions-most-popular-repo-bedrock-agent-agent:
+      patterns:
+        - "*"
 - package-ecosystem: pip
   directory: "/functions/most_popular_repo_strands"
   schedule:
     interval: monthly
   open-pull-requests-limit: 10
   versioning-strategy: increase
+  groups:
+    pip-functions-most-popular-repo-strands:
+      patterns:
+        - "*"
