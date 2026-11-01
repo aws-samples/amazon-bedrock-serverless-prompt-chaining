@@ -1,2 +1,2 @@
-boto3==1.43.112
-streamlit>=1.65.0
+boto3==1.43.121
+streamlit>=1.66.1
